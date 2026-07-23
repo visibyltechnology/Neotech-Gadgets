@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoTech Gadget | Smarter Tech. Better Life.</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-red: #E50914;
+            --primary-red-hover: #FF1E27;
+            --red-glow: rgba(229, 9, 20, 0.35);
+            --bg-black: #0B0B0E;
+            --bg-card: #14141A;
+            --bg-card-hover: #1A1A24;
+            --border-color: #242430;
+            --border-red: rgba(229, 9, 20, 0.4);
+            --text-main: #F8F9FA;
+            --text-silver: #A1A1AA;
+            --text-accent: #E2E8F0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-black);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.25s ease;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ==================== NAVBAR ==================== */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(11, 11, 14, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            transition: border-color 0.3s;
+        }
+
+        .navbar:hover {
+            border-bottom-color: var(--border-red);
+        }
+
+        .nav-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 80px;
+        }
+
+        /* Logo Branding */
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #FF1E27 0%, #90030B 100%);
+            border: 2px solid var(--text-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px var(--red-glow);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #fff;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            line-height: 1;
+            color: #fff;
+        }
+
+        .brand-name span {
+            color: var(--primary-red);
+        }
+
+        .brand-tagline {
+            font-size: 0.55rem;
+            color: var(--text-silver);
+            letter-spacing: 0.2em;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        /* Nav Links */
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-silver);
+            position: relative;
+            padding: 4px 0;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--text-main);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: var(--primary-red);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 8px var(--primary-red);
+        }
+
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        /* Nav Actions */
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .search-box {
+            position: relative;
+            display: none;
+        }
+
+        @media(min-width: 768px) {
+            .search-box {
+                display: block;
+            }
+        }
+
+        .search-box input {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px 8px 38px;
+            border-radius: 99px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.3s;
+            width: 180px;
+        }
+
+        .search-box input:focus {
+            width: 240px;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 12px var(--red-glow);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-silver);
+            font-size: 0.85rem;
+        }
+
+        .icon-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+            box-shadow: 0 0 12px var(--red-glow);
+            transform: translateY(-2px);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--primary-red);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 8px var(--primary-red);
+        }
+
+        /* ==================== HERO SECTION ==================== */
+        .hero-wrapper {
+            padding: 2.5rem 0 3.5rem 0;
+            position: relative;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, #181822 0%, #0D0D12 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 28px;
+            position: relative;
+            overflow: hidden;
+            padding: clamp(2.5rem, 5vw, 4.5rem);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Ambient Glow Effect */
+        .hero-glow-bg {
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(229, 9, 20, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+            animation: pulseGlow 6s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                opacity: 0.4;
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        @media(min-width: 992px) {
+            .hero-grid {
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+        }
+
+        .hero-badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(229, 9, 20, 0.12);
+            border: 1px solid rgba(229, 9, 20, 0.35);
+            color: #FF525A;
+            padding: 6px 16px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 5.5vw, 4.2rem);
+            font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: 1.25rem;
+            color: #fff;
+        }
+
+        .hero-title .glow-text {
+            color: var(--primary-red);
+            text-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+        }
+
+        .hero-subtitle {
+            color: var(--text-silver);
+            font-size: 1.05rem;
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-glow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #E50914 0%, #A3030A 100%);
+            color: #fff;
+            padding: 1rem 2.2rem;
+            border-radius: 14px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            box-shadow: 0 8px 25px var(--red-glow);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(229, 9, 20, 0.6);
+            background: linear-gradient(135deg, #FF1E27 0%, #C0040C 100%);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 1rem 1.8rem;
+            border-radius: 14px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-red);
+        }
+
+        /* Hero Image Showcase */
+        .hero-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-image-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-red);
+            box-shadow: 0 0 30px rgba(229, 9, 20, 0.2);
+            background: #111116;
+            transition: transform 0.5s ease;
+        }
+
+        .hero-image-wrap:hover {
+            transform: translateY(-6px) rotate(1deg);
+        }
+
+        .hero-image-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        /* Category Icons Bar (Derived from logo bottom icons) */
+        .category-quick-bar {
+            margin-top: 3rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1rem;
+        }
+
+        .cat-pill {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .cat-pill:hover {
+            border-color: var(--primary-red);
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .cat-pill i {
+            font-size: 1.3rem;
+            color: var(--primary-red);
+        }
+
+        .cat-pill span {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-accent);
+        }
+
+        /* ==================== PRODUCTS SECTION ==================== */
+        .section-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-accent-line {
+            width: 4px;
+            height: 28px;
+            background: var(--primary-red);
+            border-radius: 99px;
+            box-shadow: 0 0 10px var(--primary-red);
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .product-card:hover {
+            border-color: var(--border-red);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 15px var(--red-glow);
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 10;
+            background: var(--primary-red);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            box-shadow: 0 4px 10px var(--red-glow);
+        }
+
+        .product-img-box {
+            height: 190px;
+            background: radial-gradient(circle at center, #1F1F2A 0%, #121217 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .product-img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.4s ease;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
+        }
+
+        .product-card:hover .product-img-box img {
+            transform: scale(1.1) rotate(-1deg);
+        }
+
+        .product-details {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            line-height: 1.35;
+        }
+
+        .product-card:hover .product-name {
+            color: var(--primary-red);
+        }
+
+        .product-bottom {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+        }
+
+        .price-tag {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .add-cart-btn {
+            background: rgba(229, 9, 20, 0.15);
+            border: 1px solid var(--border-red);
+            color: var(--primary-red);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .add-cart-btn:hover {
+            background: var(--primary-red);
+            color: #fff;
+            box-shadow: 0 0 12px var(--primary-red);
+        }
+
+        /* ==================== VALUE PROPOSITIONS ==================== */
+        .value-props-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 5rem;
+        }
+
+        .prop-card {
+            background: linear-gradient(145deg, #161620, #0E0E12);
+            border: 1px solid var(--border-color);
+            border-radius: 22px;
+            padding: 2rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .prop-card:hover {
+            border-color: var(--border-red);
+            transform: translateY(-4px);
+        }
+
+        .prop-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            background: rgba(229, 9, 20, 0.1);
+            border: 1px solid var(--border-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-red);
+            font-size: 1.4rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .prop-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .prop-desc {
+            color: var(--text-silver);
+            font-size: 0.9rem;
+        }
+
+        /* ==================== FOOTER ==================== */
+        .footer {
+            background: #07070A;
+            border-top: 1px solid var(--border-color);
+            padding: 4rem 0 2rem 0;
+            margin-top: auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 2.5rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .footer-brand .brand-tagline {
+            margin-top: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .footer-text {
+            color: var(--text-silver);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .social-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-silver);
+            transition: all 0.3s;
+        }
+
+        .social-icon:hover {
+            background: var(--primary-red);
+            color: #fff;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 10px var(--red-glow);
+        }
+
+        .footer-heading {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-links a {
+            color: var(--text-silver);
+            font-size: 0.88rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-red);
+            padding-left: 4px;
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            color: var(--text-silver);
+            font-size: 0.8rem;
+        }
+
+        @media(min-width: 768px) {
+            .footer-bottom {
+                flex-direction: row;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <!-- Brand -->
+            <a href="#" class="brand-logo">
+                <div class="logo-badge">N</div>
+                <div class="brand-text">
+                    <div class="brand-name">NeoTech<span>.</span></div>
+                    <div class="brand-tagline">SMARTER TECH. BETTER LIFE.</div>
+                </div>
+            </a>
+
+            <!-- Menu Links -->
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-link active">Home</a></li>
+                <li><a href="#" class="nav-link">Phones</a></li>
+                <li><a href="#" class="nav-link">Laptops</a></li>
+                <li><a href="#" class="nav-link">Accessories</a></li>
+                <li><a href="#" class="nav-link">Deals</a></li>
+            </ul>
+
+            <!-- Search & Actions -->
+            <div class="nav-actions">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search gadgets...">
+                </div>
+
+                <button class="icon-btn" aria-label="Cart">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="cart-badge">3</span>
+                </button>
+
+                <button class="icon-btn" aria-label="Account">
+                    <i class="fa-solid fa-user"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- HERO SECTION -->
+        <section class="hero-wrapper">
+            <div class="hero-card">
+                <div class="hero-glow-bg"></div>
+                <div class="hero-grid">
+                    <div>
+                        <div class="hero-badge-tag">
+                            <i class="fa-solid fa-bolt"></i> Next-Gen Electronics Arrival
+                        </div>
+                        <h1 class="hero-title">
+                            ELEVATE YOUR <br><span class="glow-text">DIGITAL LIFE.</span>
+                        </h1>
+                        <p class="hero-subtitle">
+                            Discover flagship smartphones, high-performance laptops, and audio gear engineered for
+                            seamless performance.
+                        </p>
+                        <div class="hero-cta-group">
+                            <a href="#" class="btn-glow">
+                                EXPLORE CATALOG <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                            <a href="#" class="btn-secondary">
+                                <i class="fa-solid fa-fire"></i> Hot Deals
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Visual Side -->
+                    <div class="hero-visual">
+                        <div class="hero-image-wrap">
+                            <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80"
+                                alt="Flagship Smartphone">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories bar matching logo footer icons -->
+            <div class="category-quick-bar">
+                <div class="cat-pill">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>Smartphones</span>
+                </div>
+                <div class="cat-pill">
+                    <i class="fa-solid fa-laptop"></i>
+                    <span>Laptops</span>
+                </div>
+                <div class="cat-pill">
+                    <i class="fa-solid fa-stopwatch"></i>
+                    <span>Smartwatches</span>
+                </div>
+                <div class="cat-pill">
+                    <i class="fa-solid fa-headphones"></i>
+                    <span>Audio Gear</span>
+                </div>
+                <div class="cat-pill">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <span>Gaming</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- FEATURED PRODUCTS -->
+        <section>
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <div class="section-accent-line"></div>
+                    <h2 class="section-title">Trending Tech</h2>
+                </div>
+                <a href="#" style="color: var(--primary-red); font-weight: 700; font-size: 0.9rem;">
+                    View All <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
+                </a>
+            </div>
+
+            <div class="products-grid">
+                <!-- Product 1 -->
+                <div class="product-card">
+                    <span class="card-badge">FLAGSHIP</span>
+                    <div class="product-img-box">
+                        <img src="https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500&q=80"
+                            alt="Smartphone">
+                    </div>
+                    <div class="product-details">
+                        <h3 class="product-name">iPhone 15 Pro Max 256GB Titanium</h3>
+                        <div class="product-bottom">
+                            <div class="price-tag">₦1,850,000</div>
+                            <button class="add-cart-btn"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="product-card">
+                    <span class="card-badge">AUDIO</span>
+                    <div class="product-img-box">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"
+                            alt="Headphones">
+                    </div>
+                    <div class="product-details">
+                        <h3 class="product-name">Studio Wireless ANC Headphones</h3>
+                        <div class="product-bottom">
+                            <div class="price-tag">₦240,000</div>
+                            <button class="add-cart-btn"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="product-card">
+                    <span class="card-badge">LAPTOP</span>
+                    <div class="product-img-box">
+                        <img src="https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&q=80" alt="Laptop">
+                    </div>
+                    <div class="product-details">
+                        <h3 class="product-name">Pro Gaming Laptop M3 Max</h3>
+                        <div class="product-bottom">
+                            <div class="price-tag">₦2,450,000</div>
+                            <button class="add-cart-btn"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 4 -->
+                <div class="product-card">
+                    <span class="card-badge">WEARABLE</span>
+                    <div class="product-img-box">
+                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80"
+                            alt="Smartwatch">
+                    </div>
+                    <div class="product-details">
+                        <h3 class="product-name">Smart Watch Ultra Cellular</h3>
+                        <div class="product-bottom">
+                            <div class="price-tag">₦420,000</div>
+                            <button class="add-cart-btn"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VALUE PROPOSITIONS -->
+        <section class="value-props-grid">
+            <div class="prop-card">
+                <div class="prop-icon">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <h3 class="prop-title">Flexible Installments</h3>
+                <p class="prop-desc">Pay in stress-free monthly bits with local BNPL services. Get your gadget
+                    immediately.</p>
+            </div>
+
+            <div class="prop-card">
+                <div class="prop-icon">
+                    <i class="fa-solid fa-truck-fast"></i>
+                </div>
+                <h3 class="prop-title">Express Delivery</h3>
+                <p class="prop-desc">Same-day dispatch and nationwide door delivery with full package insurance.</p>
+            </div>
+
+            <div class="prop-card">
+                <div class="prop-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="prop-title">Official Warranty</h3>
+                <p class="prop-desc">100% authentic devices backed by manufacturer guarantee and repair support.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <!-- Brand Col -->
+                <div class="footer-brand">
+                    <div class="brand-logo" style="margin-bottom: 12px;">
+                        <div class="logo-badge">N</div>
+                        <div class="brand-text">
+                            <div class="brand-name">NeoTech<span>.</span></div>
+                            <div class="brand-tagline">SMARTER TECH. BETTER LIFE.</div>
+                        </div>
+                    </div>
+                    <p class="footer-text">
+                        Your trusted hub for premium mobile devices, computational systems, and high-tech accessories.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fa-brands fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="footer-heading">Categories</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Smartphones & Tablets</a></li>
+                        <li><a href="#">Computers & Laptops</a></li>
+                        <li><a href="#">Smart Wearables</a></li>
+                        <li><a href="#">Audio & Music Gear</a></li>
+                        <li><a href="#">Gaming Consoles</a></li>
+                    </ul>
+                </div>
+
+                <!-- Customer Care -->
+                <div>
+                    <h4 class="footer-heading">Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Track Your Order</a></li>
+                        <li><a href="#">Installment Pay Plans</a></li>
+                        <li><a href="#">Warranty & Repairs</a></li>
+                        <li><a href="#">Return Policy</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact -->
+                <div>
+                    <h4 class="footer-heading">Get in Touch</h4>
+                    <p class="footer-text" style="margin-bottom: 8px;">
+                        <i class="fa-solid fa-location-dot" style="color: var(--primary-red); margin-right: 6px;"></i>
+                        Lagos, Nigeria
+                    </p>
+                    <p class="footer-text" style="margin-bottom: 8px;">
+                        <i class="fa-solid fa-envelope" style="color: var(--primary-red); margin-right: 6px;"></i>
+                        support@neotechgadgets.com
+                    </p>
+                    <p class="footer-text">
+                        <i class="fa-solid fa-phone" style="color: var(--primary-red); margin-right: 6px;"></i> +234 800
+                        NEOTECH
+                    </p>
+                </div>
+            </div>
+
+            <!-- Bottom Copyright -->
+            <div class="footer-bottom">
+                <div>&copy; 2026 NeoTech Gadget. All Rights Reserved.</div>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

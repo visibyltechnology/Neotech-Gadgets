@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeoTech Gadgets | Smarter Tech. Better Life.</title>
+  <meta name="description" content="NeoTech Gadgets — Nigeria's premium destination for smartphones, laptops, smart wearables and accessories. Flexible installment plans available.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    /* ====================================================
+       DESIGN TOKENS
+    ==================================================== */
+    :root {
+      --red:        #D42B2B;
+      --red-bright: #FF3B3B;
+      --red-dim:    rgba(212,43,43,0.18);
+      --red-glow:   rgba(212,43,43,0.35);
+      --red-border: rgba(212,43,43,0.38);
+
+      --bg:         #0B0B0E;
+      --bg-card:    #111116;
+      --bg-card-2:  #181820;
+      --bg-hover:   #1E1E28;
+
+      --border:     #22222E;
+      --border-2:   #2C2C3A;
+
+      --text:       #F0F0F8;
+      --text-muted: #8888A0;
+      --text-dim:   #50505E;
+      --silver:     #C4C4D4;
+
+      --radius-sm:  10px;
+      --radius-md:  16px;
+      --radius-lg:  24px;
+      --radius-xl:  32px;
+
+      --transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    /* ====================================================
+       RESET & BASE
+    ==================================================== */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1,h2,h3,h4,h5,h6 {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    img { display: block; max-width: 100%; }
+
+    button { border: none; cursor: pointer; font-family: inherit; }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ====================================================
+       TICKER BAR
+    ==================================================== */
+    .ticker-bar {
+      background: var(--red);
+      padding: 0.5rem 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .ticker-track {
+      display: inline-flex;
+      gap: 0;
+      animation: ticker-scroll 30s linear infinite;
+      will-change: transform;
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 2.5rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .ticker-item::after {
+      content: '★';
+      opacity: 0.5;
+    }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ====================================================
+       NAVBAR
+    ==================================================== */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      background: rgba(11,11,14,0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      transition: border-color 0.4s;
+    }
+
+    .navbar:hover { border-bottom-color: var(--red-border); }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 76px;
+      gap: 2rem;
+    }
+
+    /* Brand */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #D42B2B 0%, #7A0F0F 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: #fff;
+      box-shadow: 0 0 18px var(--red-glow);
+      transition: var(--transition);
+    }
+
+    .brand:hover .brand-icon { box-shadow: 0 0 28px var(--red-glow); transform: rotate(-5deg); }
+
+    .brand-name {
+      font-size: 1.4rem;
+      line-height: 1;
+      color: #fff;
+    }
+
+    .brand-name em {
+      color: var(--red);
+      font-style: normal;
+    }
+
+    .brand-sub {
+      font-size: 0.5rem;
+      color: var(--text-muted);
+      letter-spacing: 0.22em;
+      font-weight: 700;
+      display: block;
+      margin-top: 3px;
+    }
+
+    /* Nav menu */
+    .nav-menu {
+      display: none;
+      list-style: none;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    @media (min-width: 900px) { .nav-menu { display: flex; } }
+
+    .nav-menu a {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0.5rem 0.85rem;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .nav-menu a:hover,
+    .nav-menu a.active {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .nav-menu a.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 50%;
+      transform: translateX(-50%);
+      width: 20px; height: 2px;
+      background: var(--red);
+      border-radius: 99px;
+      box-shadow: 0 0 8px var(--red);
+    }
+
+    /* Nav right */
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .search-pill {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 99px;
+      transition: var(--transition);
+    }
+
+    @media (min-width: 640px) { .search-pill { display: flex; } }
+
+    .search-pill:focus-within {
+      border-color: var(--red-border);
+      box-shadow: 0 0 0 3px var(--red-dim);
+    }
+
+    .search-pill input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 0.85rem;
+      width: 140px;
+      transition: width 0.35s ease;
+    }
+
+    .search-pill:focus-within input { width: 200px; }
+
+    .search-pill i { color: var(--text-dim); font-size: 0.85rem; }
+
+    .nav-icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      position: relative;
+      transition: var(--transition);
+    }
+
+    .nav-icon-btn:hover {
+      border-color: var(--red-border);
+      color: var(--red);
+      box-shadow: 0 0 14px var(--red-dim);
+      transform: translateY(-2px);
+    }
+
+    .badge {
+      position: absolute;
+      top: -5px; right: -5px;
+      background: var(--red);
+      color: #fff;
+      font-size: 0.55rem;
+      font-weight: 800;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 8px var(--red);
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 0;
+    }
+
+    .nav-shop-btn {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--red) 0%, #8A0E0E 100%);
+      color: #fff;
+      padding: 0.6rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 16px var(--red-glow);
+      transition: var(--transition);
+    }
+
+    @media (min-width: 900px) { .nav-shop-btn { display: flex; } }
+
+    .nav-shop-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px var(--red-glow);
+    }
+
+    /* ====================================================
+       HERO SECTION
+    ==================================================== */
+    .hero {
+      padding: 3rem 0 2rem;
+    }
+
+    .hero-card {
+      position: relative;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      background: linear-gradient(145deg, #181820 0%, #0D0D12 100%);
+      border: 1px solid var(--border);
+      padding: clamp(2.5rem,5vw,5rem);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    }
+
+    /* SVG circuit bg pattern */
+    .hero-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D42B2B' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    /* Glow orbs */
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(80px);
+    }
+
+    .glow-orb-1 {
+      top: -120px; right: -80px;
+      width: 550px; height: 550px;
+      background: radial-gradient(circle, rgba(212,43,43,0.28) 0%, transparent 70%);
+      animation: floatOrb 8s ease-in-out infinite alternate;
+    }
+
+    .glow-orb-2 {
+      bottom: -80px; left: 30%;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(212,43,43,0.12) 0%, transparent 70%);
+      animation: floatOrb 10s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes floatOrb {
+      from { transform: scale(0.85) translate(-20px, 10px); opacity: 0.5; }
+      to   { transform: scale(1.15) translate(20px,-10px); opacity: 0.9; }
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    @media (min-width: 960px) {
+      .hero-grid { grid-template-columns: 55fr 45fr; }
+    }
+
+    /* Hero left */
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      color: #FF5A5A;
+      padding: 5px 16px;
+      border-radius: 99px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--red);
+      animation: pulseDot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseDot {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    .hero-title {
+      font-size: clamp(2.8rem,6vw,5rem);
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 1.25rem;
+      line-height: 1.0;
+    }
+
+    .hero-title .accent {
+      color: var(--red);
+      text-shadow: 0 0 30px rgba(212,43,43,0.5);
+      display: inline-block;
+      position: relative;
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin-bottom: 2.25rem;
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--red) 0%, #8A0E0E 100%);
+      color: #fff;
+      padding: 1rem 2.25rem;
+      border-radius: var(--radius-md);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 28px var(--red-glow);
+      transition: var(--transition);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 14px 36px rgba(212,43,43,0.55);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-2);
+      color: var(--silver);
+      padding: 1rem 1.75rem;
+      border-radius: var(--radius-md);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: var(--transition);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--red-border);
+      color: #fff;
+      background: rgba(212,43,43,0.06);
+    }
+
+    /* Stats row */
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {}
+
+    .stat-value {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .stat-value sup {
+      font-size: 0.9rem;
+      color: var(--red);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Hero right – floating product stack */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hero-phone-wrap {
+      position: relative;
+      width: 260px;
+    }
+
+    .hero-phone-bg {
+      position: absolute;
+      inset: -24px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,43,43,0.22) 0%, transparent 70%);
+      animation: floatOrb 6s ease-in-out infinite alternate;
+    }
+
+    .hero-phone-img {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--red-border);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 0 40px var(--red-dim);
+      overflow: hidden;
+      background: #111116;
+      animation: floatCard 6s ease-in-out infinite;
+    }
+
+    @keyframes floatCard {
+      0%,100% { transform: translateY(0) rotate(-1deg); }
+      50%      { transform: translateY(-12px) rotate(1deg); }
+    }
+
+    .hero-phone-img img { width: 100%; object-fit: cover; }
+
+    /* Floating chips */
+    .float-chip {
+      position: absolute;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-md);
+      padding: 0.65rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 10;
+      animation: floatChip 5s ease-in-out infinite;
+    }
+
+    .float-chip-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--red);
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .float-chip-text { display: flex; flex-direction: column; }
+    .float-chip-text strong { font-family: 'Rajdhani',sans-serif; font-size: 0.9rem; font-weight: 800; color: #fff; line-height: 1; }
+    .float-chip-text span { font-size: 0.6rem; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+
+    .chip-top-left  { top: 10%; left: -100px; animation-delay: -1s; }
+    .chip-bot-right { bottom: 10%; right: -90px; animation-delay: -2.5s; }
+
+    @keyframes floatChip {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    @media (max-width: 959px) {
+      .float-chip { display: none; }
+      .hero-phone-wrap { width: 200px; }
+    }
+
+    /* ====================================================
+       CATEGORY BAR
+    ==================================================== */
+    .cat-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+      gap: 1rem;
+      margin: 2.5rem 0 4rem;
+    }
+
+    .cat-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+
+    .cat-item:hover {
+      border-color: var(--red-border);
+      background: var(--bg-hover);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.45), 0 0 12px var(--red-dim);
+    }
+
+    .cat-item i {
+      font-size: 1.4rem;
+      color: var(--red);
+      transition: transform 0.3s;
+    }
+
+    .cat-item:hover i { transform: scale(1.2); }
+
+    .cat-item span {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--silver);
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ====================================================
+       DEAL BANNER
+    ==================================================== */
+    .deal-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #1A0808 0%, #220C0C 50%, #150505 100%);
+      border: 1px solid var(--red-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem 2.5rem;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .deal-banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 5px;
+      background: linear-gradient(to bottom, var(--red), transparent);
+    }
+
+    .deal-banner-glow {
+      position: absolute;
+      right: -50px; top: -50px;
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, rgba(212,43,43,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .deal-meta { display: flex; flex-direction: column; gap: 4px; z-index: 1; }
+
+    .deal-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--red);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .deal-title {
+      font-size: 1.5rem;
+      color: #fff;
+      margin: 0;
+    }
+
+    .deal-sub { font-size: 0.875rem; color: var(--text-muted); margin-top: 2px; }
+
+    .deal-timer {
+      display: flex;
+      gap: 0.75rem;
+      z-index: 1;
+    }
+
+    .timer-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.9rem;
+      min-width: 58px;
+    }
+
+    .timer-num {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .timer-label {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* ====================================================
+       SECTION HEADERS
+    ==================================================== */
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-bar {
+      width: 4px;
+      height: 32px;
+      background: linear-gradient(to bottom, var(--red), #6A0000);
+      border-radius: 99px;
+      box-shadow: 0 0 12px var(--red);
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .section-link {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: gap 0.25s;
+    }
+
+    .section-link:hover { gap: 10px; }
+
+    /* ====================================================
+       PRODUCT GRID
+    ==================================================== */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(268px,1fr));
+      gap: 1.5rem;
+      margin-bottom: 5rem;
+    }
+
+    /* Product Card */
+    .p-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .p-card:hover {
+      border-color: var(--red-border);
+      transform: translateY(-10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 20px var(--red-dim);
+    }
+
+    /* Card badge */
+    .p-badge {
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 5;
+      background: var(--red);
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.62rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      box-shadow: 0 4px 12px var(--red-glow);
+    }
+
+    .p-badge.hot {
+      background: linear-gradient(90deg, #FF6B35, #E50914);
+      box-shadow: 0 4px 12px rgba(255,107,53,0.5);
+    }
+
+    .p-badge.new {
+      background: linear-gradient(90deg, #00C6FF, #0072FF);
+      box-shadow: 0 4px 12px rgba(0,114,255,0.4);
+    }
+
+    /* Wishlist btn */
+    .p-wishlist {
+      position: absolute;
+      top: 14px; right: 14px;
+      z-index: 5;
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      background: rgba(11,11,14,0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .p-card:hover .p-wishlist { opacity: 1; }
+
+    .p-wishlist:hover { color: var(--red); border-color: var(--red-border); }
+
+    /* Image */
+    .p-img {
+      height: 200px;
+      background: radial-gradient(circle at center, #1C1C26 0%, #0F0F14 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .p-img::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 40px;
+      background: linear-gradient(to top, var(--bg-card), transparent);
+    }
+
+    .p-img img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
+      transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .p-card:hover .p-img img { transform: scale(1.1) rotate(-2deg); }
+
+    /* Body */
+    .p-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 0.5rem;
+    }
+
+    .p-rating {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .p-stars { color: #F5A623; font-size: 0.7rem; letter-spacing: 1px; }
+    .p-reviews { font-size: 0.68rem; color: var(--text-dim); }
+
+    .p-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      transition: color 0.2s;
+    }
+
+    .p-card:hover .p-name { color: var(--red); }
+
+    .p-installment {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .p-installment i { color: #60a5fa; font-size: 0.65rem; }
+
+    .p-foot {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .p-price {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .p-old-price {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      text-decoration: line-through;
+      font-weight: 400;
+    }
+
+    .p-cart-btn {
+      width: 38px; height: 38px;
+      border-radius: var(--radius-sm);
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      color: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .p-cart-btn:hover {
+      background: var(--red);
+      color: #fff;
+      box-shadow: 0 0 16px var(--red-glow);
+      transform: scale(1.1);
+    }
+
+    /* ====================================================
+       FEATURED WIDE CARD
+    ==================================================== */
+    .featured-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-bottom: 5rem;
+    }
+
+    @media (min-width: 768px) {
+      .featured-grid { grid-template-columns: 2fr 1fr; }
+    }
+
+    .featured-card {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg-card-2);
+      min-height: 320px;
+      display: flex;
+      align-items: flex-end;
+      transition: var(--transition);
+    }
+
+    .featured-card:hover {
+      border-color: var(--red-border);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+
+    .featured-img {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .featured-img img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+      opacity: 0.6;
+    }
+
+    .featured-card:hover .featured-img img { transform: scale(1.06); }
+
+    .featured-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(11,11,14,1) 0%, rgba(11,11,14,0.5) 50%, transparent 100%);
+    }
+
+    .featured-content {
+      position: relative;
+      z-index: 2;
+      padding: 2rem;
+      width: 100%;
+    }
+
+    .featured-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--red);
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 3px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.75rem;
+    }
+
+    .featured-content h3 {
+      font-size: 1.5rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .featured-content p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    .featured-price {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* ====================================================
+       VALUE PROPS
+    ==================================================== */
+    .props-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+      gap: 1.5rem;
+      margin-bottom: 5rem;
+    }
+
+    .prop-card {
+      background: linear-gradient(145deg, #161620, #0E0E12);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prop-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--red), transparent);
+      transform: scaleX(0);
+      transition: transform 0.4s ease;
+    }
+
+    .prop-card:hover {
+      border-color: var(--red-border);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    }
+
+    .prop-card:hover::after { transform: scaleX(1); }
+
+    .prop-icon {
+      width: 56px; height: 56px;
+      border-radius: var(--radius-md);
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--red);
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .prop-card:hover .prop-icon {
+      background: var(--red);
+      color: #fff;
+      box-shadow: 0 0 20px var(--red-glow);
+    }
+
+    .prop-title {
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .prop-desc { color: var(--text-muted); font-size: 0.875rem; line-height: 1.65; }
+
+    /* ====================================================
+       TESTIMONIALS
+    ==================================================== */
+    .testimonials-section { margin-bottom: 5rem; }
+
+    .testi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
+      gap: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    .testi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .testi-card:hover {
+      border-color: var(--red-border);
+      transform: translateY(-4px);
+    }
+
+    .testi-quote {
+      font-size: 2.5rem;
+      color: var(--red);
+      opacity: 0.25;
+      font-family: Georgia, serif;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .testi-text {
+      color: var(--silver);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+    }
+
+    .testi-stars { color: #F5A623; font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 1rem; }
+
+    .testi-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .testi-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--red-dim);
+      border: 2px solid var(--red-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--red);
+    }
+
+    .testi-name { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+    .testi-role { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* ====================================================
+       NEWSLETTER
+    ==================================================== */
+    .newsletter {
+      background: linear-gradient(135deg, #1A0808 0%, #1D0D0D 60%, #160606 100%);
+      border: 1px solid var(--red-border);
+      border-radius: var(--radius-xl);
+      padding: clamp(2.5rem,5vw,4rem);
+      text-align: center;
+      margin-bottom: 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .newsletter-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 400px; height: 200px;
+      background: radial-gradient(circle, rgba(212,43,43,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .newsletter h2 {
+      font-size: clamp(1.6rem,3.5vw,2.5rem);
+      color: #fff;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+
+    .newsletter p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: 0.75rem;
+      max-width: 480px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+    }
+
+    .newsletter-input {
+      flex: 1;
+      min-width: 220px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1.25rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .newsletter-input:focus {
+      border-color: var(--red-border);
+      box-shadow: 0 0 0 3px var(--red-dim);
+    }
+
+    .newsletter-input::placeholder { color: var(--text-dim); }
+
+    .newsletter-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--red) 0%, #8A0E0E 100%);
+      color: #fff;
+      padding: 0.85rem 1.75rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      box-shadow: 0 6px 20px var(--red-glow);
+      transition: var(--transition);
+    }
+
+    .newsletter-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px var(--red-glow); }
+
+    /* ====================================================
+       FOOTER
+    ==================================================== */
+    .footer {
+      background: #060608;
+      border-top: 1px solid var(--border);
+      padding: 4.5rem 0 2rem;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.4fr repeat(3, 1fr);
+      gap: 3rem;
+      margin-bottom: 4rem;
+    }
+
+    @media (max-width: 900px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 540px) {
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+
+    .footer-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .social-row { display: flex; gap: 8px; }
+
+    .social-btn {
+      width: 38px; height: 38px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .social-btn:hover {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+      box-shadow: 0 0 14px var(--red-glow);
+      transform: translateY(-3px);
+    }
+
+    .footer-col h4 {
+      font-size: 0.85rem;
+      color: #fff;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-col h4::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+    .footer-links a {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s;
+    }
+
+    .footer-links a i { font-size: 0.65rem; color: var(--text-dim); transition: color 0.2s; }
+
+    .footer-links a:hover { color: var(--red); padding-left: 4px; }
+    .footer-links a:hover i { color: var(--red); }
+
+    .footer-contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 0.85rem;
+    }
+
+    .footer-contact-item i {
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+
+    .footer-contact-item span { font-size: 0.875rem; color: var(--text-muted); }
+
+    .footer-bottom {
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .footer-copy { font-size: 0.8rem; color: var(--text-dim); }
+
+    .footer-legal { display: flex; gap: 1.5rem; }
+
+    .footer-legal a {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      transition: color 0.2s;
+    }
+
+    .footer-legal a:hover { color: var(--red); }
+
+    .footer-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+
+    .footer-badge i { color: #4ade80; font-size: 0.65rem; }
+
+    /* ====================================================
+       SCROLLBAR
+    ==================================================== */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+    /* ====================================================
+       UTILITY ANIMATIONS
+    ==================================================== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+      opacity: 0;
+    }
+
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.22s; }
+    .delay-3 { animation-delay: 0.34s; }
+    .delay-4 { animation-delay: 0.46s; }
+
+    /* ====================================================
+       RESPONSIVE
+    ==================================================== */
+    @media (max-width: 768px) {
+      .nav-menu, .nav-shop-btn { display: none; }
+      .hero-stats { gap: 1.5rem; }
+      .deal-timer { gap: 0.5rem; }
+      .timer-block { padding: 0.5rem 0.7rem; min-width: 50px; }
+      .timer-num { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ====================================================
+       TICKER BAR
+  ==================================================== -->
+  <div class="ticker-bar" role="marquee" aria-label="Promotions">
+    <div class="ticker-track" id="ticker">
+      <span class="ticker-item">Free Delivery on Orders Above ₦50,000</span>
+      <span class="ticker-item">Flexible Installment Plans Available</span>
+      <span class="ticker-item">100% Authentic Devices · Full Manufacturer Warranty</span>
+      <span class="ticker-item">Same-Day Dispatch in Lagos</span>
+      <span class="ticker-item">Trade-In Your Old Device for Instant Discount</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="ticker-item">Free Delivery on Orders Above ₦50,000</span>
+      <span class="ticker-item">Flexible Installment Plans Available</span>
+      <span class="ticker-item">100% Authentic Devices · Full Manufacturer Warranty</span>
+      <span class="ticker-item">Same-Day Dispatch in Lagos</span>
+      <span class="ticker-item">Trade-In Your Old Device for Instant Discount</span>
+    </div>
+  </div>
+
+  <!-- ====================================================
+       NAVBAR
+  ==================================================== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="container nav-inner">
+
+      <!-- Brand -->
+      <a href="/" class="brand" aria-label="NeoTech Gadgets Home">
+        <div class="brand-icon">
+          <i class="fa-solid fa-microchip"></i>
+        </div>
+        <div>
+          <div class="brand-name">NEO<em>TECH</em></div>
+          <span class="brand-sub">Smarter Tech · Better Life</span>
+        </div>
+      </a>
+
+      <!-- Menu -->
+      <ul class="nav-menu" role="list">
+        <li><a href="#" class="active">Home</a></li>
+        <li><a href="#">Phones</a></li>
+        <li><a href="#">Laptops</a></li>
+        <li><a href="#">Audio</a></li>
+        <li><a href="#">Wearables</a></li>
+        <li><a href="#">Deals</a></li>
+      </ul>
+
+      <!-- Right Actions -->
+      <div class="nav-right">
+        <div class="search-pill">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" placeholder="Search products…" aria-label="Search products">
+        </div>
+
+        <button class="nav-icon-btn" aria-label="Notifications">
+          <i class="fa-solid fa-bell"></i>
+          <span class="badge">2</span>
+        </button>
+
+        <button class="nav-icon-btn" aria-label="Cart">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="badge">4</span>
+        </button>
+
+        <button class="nav-icon-btn" aria-label="Account">
+          <i class="fa-solid fa-user"></i>
+        </button>
+
+        <a href="#" class="nav-shop-btn">
+          <i class="fa-solid fa-bag-shopping"></i> Shop Now
+        </a>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- ====================================================
+       MAIN
+  ==================================================== -->
+  <main>
+    <div class="container">
+
+      <!-- ======= HERO ======= -->
+      <section class="hero" aria-label="Hero">
+        <div class="hero-card">
+          <div class="hero-pattern"></div>
+          <div class="glow-orb glow-orb-1"></div>
+          <div class="glow-orb glow-orb-2"></div>
+
+          <div class="hero-grid">
+            <!-- LEFT -->
+            <div>
+              <div class="hero-eyebrow fade-in-up">
+                <span class="dot"></span>
+                <i class="fa-solid fa-bolt"></i>
+                New Season Collection — 2026
+              </div>
+
+              <h1 class="hero-title fade-in-up delay-1">
+                ELEVATE YOUR<br>
+                <span class="accent">DIGITAL LIFE.</span>
+              </h1>
+
+              <p class="hero-sub fade-in-up delay-2">
+                Nigeria's #1 destination for flagship smartphones, high-performance laptops, and premium audio gear — with flexible installment plans built for you.
+              </p>
+
+              <div class="hero-actions fade-in-up delay-3">
+                <a href="#" class="btn-primary">
+                  Explore Catalog
+                  <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a href="#" class="btn-ghost">
+                  <i class="fa-solid fa-fire"></i>
+                  Hot Deals
+                </a>
+              </div>
+
+              <!-- Stats -->
+              <div class="hero-stats fade-in-up delay-4">
+                <div class="stat-item">
+                  <div class="stat-value"><span class="counter" data-target="4800">0</span><sup>+</sup></div>
+                  <div class="stat-label">Products</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value"><span class="counter" data-target="28000">0</span><sup>+</sup></div>
+                  <div class="stat-label">Happy Customers</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value"><span class="counter" data-target="98">0</span><sup>%</sup></div>
+                  <div class="stat-label">5-Star Reviews</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT – Floating phone visual -->
+            <div class="hero-visual">
+              <!-- Floating info chips -->
+              <div class="float-chip chip-top-left">
+                <div class="float-chip-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="float-chip-text">
+                  <strong>Warranty</strong>
+                  <span>Manufacturer Guarantee</span>
+                </div>
+              </div>
+
+              <div class="hero-phone-wrap">
+                <div class="hero-phone-bg"></div>
+                <div class="hero-phone-img">
+                  <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80" alt="Latest Flagship Smartphone" loading="eager">
+                </div>
+              </div>
+
+              <div class="float-chip chip-bot-right">
+                <div class="float-chip-icon"><i class="fa-solid fa-credit-card"></i></div>
+                <div class="float-chip-text">
+                  <strong>Pay Monthly</strong>
+                  <span>0% Interest Available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Quick Bar -->
+        <div class="cat-bar" role="navigation" aria-label="Product categories">
+          <a href="#" class="cat-item">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+            <span>Smartphones</span>
+          </a>
+          <a href="#" class="cat-item">
+            <i class="fa-solid fa-laptop"></i>
+            <span>Laptops</span>
+          </a>
+          <a href="#" class="cat-item">
+            <i class="fa-solid fa-headphones"></i>
+            <span>Audio</span>
+          </a>
+          <a href="#" class="cat-item">
+            <i class="fa-solid fa-stopwatch"></i>
+            <span>Wearables</span>
+          </a>
+          <a href="#" class="cat-item">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>Gaming</span>
+          </a>
+          <a href="#" class="cat-item">
+            <i class="fa-solid fa-solar-panel"></i>
+            <span>Solar</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- ======= DEAL BANNER ======= -->
+      <div class="deal-banner" role="region" aria-label="Flash deal">
+        <div class="deal-banner-glow"></div>
+        <div class="deal-meta">
+          <span class="deal-label"><i class="fa-solid fa-bolt"></i> Flash Deal of the Day</span>
+          <h2 class="deal-title">Samsung Galaxy S24 Ultra — 20% OFF</h2>
+          <p class="deal-sub">Only 11 units left. Use code: <strong style="color:#fff;">NEOTECH20</strong></p>
+        </div>
+
+        <div class="deal-timer" id="deal-timer" aria-label="Countdown timer">
+          <div class="timer-block">
+            <span class="timer-num" id="t-h">09</span>
+            <span class="timer-label">Hours</span>
+          </div>
+          <div class="timer-block">
+            <span class="timer-num" id="t-m">42</span>
+            <span class="timer-label">Mins</span>
+          </div>
+          <div class="timer-block">
+            <span class="timer-num" id="t-s">17</span>
+            <span class="timer-label">Secs</span>
+          </div>
+        </div>
+
+        <a href="#" class="btn-primary">
+          Grab Deal <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- ======= TRENDING PRODUCTS ======= -->
+      <section aria-labelledby="trending-title">
+        <div class="section-header">
+          <div class="section-label">
+            <div class="section-bar"></div>
+            <h2 class="section-title" id="trending-title">Trending Tech</h2>
+          </div>
+          <a href="#" class="section-link">View All <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+
+        <div class="products-grid">
+
+          <!-- Product 1 -->
+          <article class="p-card">
+            <span class="p-badge hot">🔥 Hot</span>
+            <button class="p-wishlist" aria-label="Add to wishlist"><i class="fa-regular fa-heart"></i></button>
+            <div class="p-img">
+              <img src="https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&q=80" alt="iPhone 15 Pro Max" loading="lazy">
+            </div>
+            <div class="p-body">
+              <div class="p-rating">
+                <span class="p-stars">★★★★★</span>
+                <span class="p-reviews">(284)</span>
+              </div>
+              <h3 class="p-name">iPhone 15 Pro Max 256GB Titanium</h3>
+              <p class="p-installment"><i class="fa-solid fa-circle-check"></i> From ₦92,500/mo · 24 months</p>
+              <div class="p-foot">
+                <div>
+                  <div class="p-old-price">₦2,100,000</div>
+                  <div class="p-price">₦1,850,000</div>
+                </div>
+                <button class="p-cart-btn" aria-label="Add to cart"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product 2 -->
+          <article class="p-card">
+            <span class="p-badge new">NEW</span>
+            <button class="p-wishlist" aria-label="Add to wishlist"><i class="fa-regular fa-heart"></i></button>
+            <div class="p-img">
+              <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" alt="Pro Wireless Headphones" loading="lazy">
+            </div>
+            <div class="p-body">
+              <div class="p-rating">
+                <span class="p-stars">★★★★☆</span>
+                <span class="p-reviews">(97)</span>
+              </div>
+              <h3 class="p-name">Studio Pro ANC Wireless Headphones</h3>
+              <p class="p-installment"><i class="fa-solid fa-circle-check"></i> From ₦20,000/mo · 12 months</p>
+              <div class="p-foot">
+                <div>
+                  <div class="p-old-price">₦280,000</div>
+                  <div class="p-price">₦240,000</div>
+                </div>
+                <button class="p-cart-btn" aria-label="Add to cart"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product 3 -->
+          <article class="p-card">
+            <span class="p-badge">Laptop</span>
+            <button class="p-wishlist" aria-label="Add to wishlist"><i class="fa-regular fa-heart"></i></button>
+            <div class="p-img">
+              <img src="https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400&q=80" alt="Gaming Laptop" loading="lazy">
+            </div>
+            <div class="p-body">
+              <div class="p-rating">
+                <span class="p-stars">★★★★★</span>
+                <span class="p-reviews">(53)</span>
+              </div>
+              <h3 class="p-name">ROG Zephyrus G16 RTX 4080 Gaming Laptop</h3>
+              <p class="p-installment"><i class="fa-solid fa-circle-check"></i> From ₦204,200/mo · 12 months</p>
+              <div class="p-foot">
+                <div>
+                  <div class="p-price">₦2,450,000</div>
+                </div>
+                <button class="p-cart-btn" aria-label="Add to cart"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product 4 -->
+          <article class="p-card">
+            <span class="p-badge hot">🔥 Hot</span>
+            <button class="p-wishlist" aria-label="Add to wishlist"><i class="fa-regular fa-heart"></i></button>
+            <div class="p-img">
+              <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" alt="Smart Watch Ultra" loading="lazy">
+            </div>
+            <div class="p-body">
+              <div class="p-rating">
+                <span class="p-stars">★★★★☆</span>
+                <span class="p-reviews">(181)</span>
+              </div>
+              <h3 class="p-name">Apple Watch Ultra 2 — Alpine Loop</h3>
+              <p class="p-installment"><i class="fa-solid fa-circle-check"></i> From ₦35,000/mo · 12 months</p>
+              <div class="p-foot">
+                <div>
+                  <div class="p-old-price">₦480,000</div>
+                  <div class="p-price">₦420,000</div>
+                </div>
+                <button class="p-cart-btn" aria-label="Add to cart"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ======= FEATURED / EDITORIAL ======= -->
+      <section aria-labelledby="featured-title">
+        <div class="section-header">
+          <div class="section-label">
+            <div class="section-bar"></div>
+            <h2 class="section-title" id="featured-title">Featured Collections</h2>
+          </div>
+          <a href="#" class="section-link">Browse All <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+
+        <div class="featured-grid">
+          <!-- Wide card -->
+          <div class="featured-card" style="min-height:360px;">
+            <div class="featured-img">
+              <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=900&q=70" alt="Premium Tech Collection">
+            </div>
+            <div class="featured-overlay"></div>
+            <div class="featured-content">
+              <span class="featured-tag"><i class="fa-solid fa-fire"></i> Editor's Pick</span>
+              <h3>Ultimate Productivity Bundle</h3>
+              <p>MacBook Pro M3 Max + iPad Pro + AirPods Pro — built for creators.</p>
+              <a href="#" class="btn-primary">Shop Bundle</a>
+            </div>
+          </div>
+
+          <!-- Stacked cards -->
+          <div style="display:flex;flex-direction:column;gap:1.25rem;">
+            <div class="featured-card" style="min-height:170px;">
+              <div class="featured-img">
+                <img src="https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=600&q=70" alt="Solar Products">
+              </div>
+              <div class="featured-overlay"></div>
+              <div class="featured-content">
+                <span class="featured-tag"><i class="fa-solid fa-solar-panel"></i> Solar</span>
+                <h3 style="font-size:1.1rem;">Solar Power Systems</h3>
+                <p style="margin-bottom:0.5rem;">Power your home — uninterrupted.</p>
+              </div>
+            </div>
+            <div class="featured-card" style="min-height:170px;">
+              <div class="featured-img">
+                <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?auto=format&fit=crop&w=600&q=70" alt="Gaming Accessories">
+              </div>
+              <div class="featured-overlay"></div>
+              <div class="featured-content">
+                <span class="featured-tag" style="background:#7C3AED;"><i class="fa-solid fa-gamepad"></i> Gaming</span>
+                <h3 style="font-size:1.1rem;">Gaming Peripherals</h3>
+                <p style="margin-bottom:0.5rem;">Level up your setup today.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======= VALUE PROPOSITIONS ======= -->
+      <section aria-label="Why choose NeoTech" style="margin-top:5rem;">
+        <div class="section-header">
+          <div class="section-label">
+            <div class="section-bar"></div>
+            <h2 class="section-title">Why NeoTech?</h2>
+          </div>
+        </div>
+
+        <div class="props-grid">
+          <div class="prop-card">
+            <div class="prop-icon"><i class="fa-solid fa-credit-card"></i></div>
+            <h3 class="prop-title">Flexible Installments</h3>
+            <p class="prop-desc">Spread payments over 3–24 months with zero hidden fees. Get your device today, pay on your schedule.</p>
+          </div>
+          <div class="prop-card">
+            <div class="prop-icon"><i class="fa-solid fa-truck-fast"></i></div>
+            <h3 class="prop-title">Express Delivery</h3>
+            <p class="prop-desc">Same-day dispatch in Lagos. Nationwide door delivery with real-time tracking and full package insurance.</p>
+          </div>
+          <div class="prop-card">
+            <div class="prop-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3 class="prop-title">Official Warranty</h3>
+            <p class="prop-desc">Every device is 100% authentic, sealed in original packaging, backed by full manufacturer guarantee.</p>
+          </div>
+          <div class="prop-card">
+            <div class="prop-icon"><i class="fa-solid fa-headset"></i></div>
+            <h3 class="prop-title">24/7 Support</h3>
+            <p class="prop-desc">Our expert team is always available via WhatsApp, phone, or chat to assist you before and after purchase.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======= TESTIMONIALS ======= -->
+      <section class="testimonials-section" aria-labelledby="reviews-title">
+        <div class="section-header">
+          <div class="section-label">
+            <div class="section-bar"></div>
+            <h2 class="section-title" id="reviews-title">Customer Reviews</h2>
+          </div>
+          <a href="#" class="section-link">All Reviews <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+
+        <div class="testi-grid">
+          <div class="testi-card">
+            <div class="testi-quote">"</div>
+            <p class="testi-text">Got my iPhone 15 Pro in 4 hours with same-day delivery. Installment plan was super easy to set up. NeoTech is the real deal!</p>
+            <div class="testi-stars">★★★★★</div>
+            <div class="testi-author">
+              <div class="testi-avatar">AO</div>
+              <div>
+                <div class="testi-name">Adebayo Okafor</div>
+                <div class="testi-role">Lagos, Nigeria</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="testi-card">
+            <div class="testi-quote">"</div>
+            <p class="testi-text">The monthly payment option made it possible for me to get a MacBook Pro I couldn't afford outright. Seamless process from start to finish.</p>
+            <div class="testi-stars">★★★★★</div>
+            <div class="testi-author">
+              <div class="testi-avatar">CM</div>
+              <div>
+                <div class="testi-name">Chisom Madu</div>
+                <div class="testi-role">Abuja, Nigeria</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="testi-card">
+            <div class="testi-quote">"</div>
+            <p class="testi-text">Excellent customer service — responded in minutes on WhatsApp. My order tracking was perfect. Will definitely buy again.</p>
+            <div class="testi-stars">★★★★★</div>
+            <div class="testi-author">
+              <div class="testi-avatar">EI</div>
+              <div>
+                <div class="testi-name">Emeka Ike</div>
+                <div class="testi-role">Port Harcourt, Nigeria</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======= NEWSLETTER ======= -->
+      <div class="newsletter" role="region" aria-label="Newsletter signup">
+        <div class="newsletter-glow"></div>
+        <h2>Stay Ahead of the Tech Curve</h2>
+        <p>Get exclusive deals, early access, and product drops straight to your inbox.</p>
+        <form class="newsletter-form" onsubmit="handleNewsletter(event)">
+          <input type="email" class="newsletter-input" placeholder="Enter your email address" required aria-label="Email address">
+          <button type="submit" class="newsletter-btn">
+            <i class="fa-solid fa-paper-plane"></i> Subscribe
+          </button>
+        </form>
+      </div>
+
+    </div><!-- /container -->
+  </main>
+
+  <!-- ====================================================
+       FOOTER
+  ==================================================== -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+
+        <!-- Brand col -->
+        <div>
+          <a href="/" class="brand" style="margin-bottom:1rem;display:inline-flex;">
+            <div class="brand-icon"><i class="fa-solid fa-microchip"></i></div>
+            <div>
+              <div class="brand-name">NEO<em>TECH</em></div>
+              <span class="brand-sub">Smarter Tech · Better Life</span>
+            </div>
+          </a>
+          <p class="footer-desc">Nigeria's premier destination for authentic premium gadgets, solar systems, and smart accessories — with installment plans tailored for you.</p>
+          <div class="social-row">
+            <a href="#" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="social-btn" aria-label="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" class="social-btn" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+            <a href="#" class="social-btn" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+          </div>
+        </div>
+
+        <!-- Products col -->
+        <div class="footer-col">
+          <h4>Products</h4>
+          <ul class="footer-links">
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Smartphones & Tablets</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Laptops & Computers</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Smart Wearables</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Audio & Music Gear</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Solar Power Systems</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Gaming Peripherals</a></li>
+          </ul>
+        </div>
+
+        <!-- Support col -->
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul class="footer-links">
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Track Your Order</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Installment Pay Plans</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Warranty & Repairs</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Return Policy</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> FAQs</a></li>
+            <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact col -->
+        <div class="footer-col">
+          <h4>Get in Touch</h4>
+          <div class="footer-contact-item">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>123 Broad Street, Lagos Island, Lagos, Nigeria</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fa-solid fa-envelope"></i>
+            <span>support@neotechgadgets.ng</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fa-solid fa-phone"></i>
+            <span>+234 800 NEOTECH</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fa-brands fa-whatsapp"></i>
+            <span>WhatsApp: +234 800 000 0000</span>
+          </div>
+          <div class="footer-contact-item" style="margin-top:0.5rem;">
+            <i class="fa-solid fa-clock"></i>
+            <span>Mon – Sat: 8am – 8pm WAT</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="footer-bottom">
+        <span class="footer-copy">&copy; 2026 NeoTech Gadgets Nigeria Ltd. All rights reserved.</span>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Cookie Policy</a>
+        </div>
+        <div class="footer-badge">
+          <i class="fa-solid fa-circle-check"></i>
+          SSL Secured &amp; Verified
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ====================================================
+       SCRIPTS
+  ==================================================== -->
+  <script>
+    // ── Animated Counters ──────────────────────────────
+    function animateCounter(el, target) {
+      let current = 0;
+      const duration = 1800;
+      const step = target / (duration / 16);
+      const tick = () => {
+        current = Math.min(current + step, target);
+        el.textContent = Math.floor(current).toLocaleString();
+        if (current < target) requestAnimationFrame(tick);
+        else el.textContent = target.toLocaleString();
+      };
+      tick();
+    }
+
+    const counterEls = document.querySelectorAll('.counter');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          animateCounter(e.target, parseInt(e.target.dataset.target));
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    counterEls.forEach(el => observer.observe(el));
+
+    // ── Deal Countdown Timer ───────────────────────────
+    (function () {
+      // Set an end time 9h42m17s from now
+      const end = new Date(Date.now() + (9 * 3600 + 42 * 60 + 17) * 1000);
+
+      function pad(n) { return String(n).padStart(2, '0'); }
+
+      function tick() {
+        const diff = Math.max(0, end - Date.now());
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('t-h').textContent = pad(h);
+        document.getElementById('t-m').textContent = pad(m);
+        document.getElementById('t-s').textContent = pad(s);
+        if (diff > 0) setTimeout(tick, 1000);
+      }
+
+      tick();
+    })();
+
+    // ── Newsletter Submission ──────────────────────────
+    function handleNewsletter(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('.newsletter-btn');
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Subscribed!';
+      btn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Subscribe';
+        btn.style.background = '';
+        e.target.reset();
+      }, 3500);
+    }
+
+    // ── Navbar scroll effect ───────────────────────────
+    window.addEventListener('scroll', () => {
+      const nb = document.querySelector('.navbar');
+      if (window.scrollY > 60) {
+        nb.style.background = 'rgba(11,11,14,0.96)';
+        nb.style.boxShadow = '0 4px 24px rgba(0,0,0,0.5)';
+      } else {
+        nb.style.background = 'rgba(11,11,14,0.88)';
+        nb.style.boxShadow = 'none';
+      }
+    });
+
+    // ── Wishlist toggle ────────────────────────────────
+    document.querySelectorAll('.p-wishlist').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-regular');
+        icon.classList.toggle('fa-solid');
+        this.style.color = icon.classList.contains('fa-solid') ? 'var(--red)' : '';
+        this.style.borderColor = icon.classList.contains('fa-solid') ? 'var(--red-border)' : '';
+      });
+    });
+  </script>
+
+</body>
+</html>
