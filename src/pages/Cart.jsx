@@ -218,6 +218,7 @@ export default function Cart() {
       quantity: i.quantity,
     }));
     const klumpSubtotal = klumpItems.reduce((acc, i) => acc + i.unit_price * i.quantity, 0);
+    const klumpGrandTotal = klumpSubtotal + shippingFee;
     try {
       await loadKlumpScript();
       const KlumpCtor = getKlump();
@@ -225,7 +226,7 @@ export default function Cart() {
       new KlumpCtor({
         publicKey: KLUMP_PUBLIC_KEY,
         data: {
-          amount: klumpSubtotal,
+          amount: klumpGrandTotal,
           shipping_fee: shippingFee,
           currency: 'NGN',
           redirect_url: `${window.location.origin}/profile`,
