@@ -108,6 +108,59 @@ export default function AdminOrders() {
     }
   };
 
+  const handleInitialPaymentStatus = async (orderId, status, totalAmount) => {
+    if (status === 'Rejected') {
+      const reason = prompt('Enter reason for rejection (e.g. "Amount too low", "Receipt unclear"):');
+      if (!reason || !reason.trim()) return;
+      setUpdating(true);
+      try {
+        await updateDoc(doc(db, 'orders', orderId), {
+          initialPaymentStatus: 'Rejected',
+          initialPaymentRejectReason: reason.trim(),
+        });
+        alert('Initial payment rejected.');
+      } catch (e) {
+        alert('Failed to reject payment.');
+      } finally {
+        setUpdating(false);
+      }
+      return;
+    }
+
+    const confirmed = prompt(
+      `Confirm actual deposit amount received (₦). Required was ₦${Math.ceil(totalAmount).toLocaleString('en-NG')}. Enter actual amount received:`,
+      String(Math.ceil(totalAmount))
+    );
+    if (confirmed === null) return;
+    const actualAmount = Number(confirmed);
+    if (isNaN(actualAmount) || actualAmount <= 0) {
+        alert('Invalid amount');
+        return;
+    }
+
+    setUpdating(true);
+    try {
+      const wasComplete = actualAmount >= totalAmount;
+      const updates = {
+        initialPaymentStatus: 'Approved',
+        initialPaymentRejectReason: null,
+        amountPaid: actualAmount,
+        status: wasComplete ? 'Completed' : 'Processing (Installments)'
+      };
+      
+      if (wasComplete) {
+         setNewlyCompleted(prev => new Set([...prev, orderId]));
+      }
+
+      await updateDoc(doc(db, 'orders', orderId), updates);
+      alert('Initial payment approved successfully!');
+    } catch (e) {
+      alert('Failed to approve payment.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const totalOrders = orders.length;
   const completedOrders = orders.filter(o => o.status === 'Completed').length;
   const pendingOrders = orders.filter(o => o.status !== 'Completed').length;
@@ -429,6 +482,37 @@ export default function AdminOrders() {
                           <span className="mx-1">• Balance: <span className="text-brandDark font-bold">{fmt(order.totalAmount - order.amountPaid)}</span></span>
                         )}
                       </div>
+
+                      {order.receiptUrl && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-sm p-4 mb-4">
+                          <div className="flex justify-between items-center mb-3">
+                            <div className="text-[10px] font-bold text-blue-800 uppercase tracking-widest">Initial Payment Receipt</div>
+                            {order.initialPaymentStatus && (
+                              <span className={`text-[10px] font-bold uppercase tracking-wider ${order.initialPaymentStatus === 'Approved' ? 'text-green-600' : order.initialPaymentStatus === 'Rejected' ? 'text-red-600' : 'text-amber-600'}`}>
+                                {order.initialPaymentStatus}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <div className="w-16 h-16 rounded overflow-hidden border border-blue-100 flex-shrink-0">
+                              <img src={order.receiptUrl} alt="Receipt Thumbnail" className="w-full h-full object-cover" />
+                            </div>
+                            <a href={order.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-sm transition-colors">
+                              View Full Receipt
+                            </a>
+                            
+                            {(!order.initialPaymentStatus || order.initialPaymentStatus === 'Pending' || order.initialPaymentStatus === 'Pending Verification') && (
+                              <div className="flex gap-2 ml-auto">
+                                <button onClick={() => handleInitialPaymentStatus(order.id, 'Approved', order.totalAmount)} disabled={updating} className="text-xs font-bold text-black bg-brandLime hover:bg-brandLime/80 px-3 py-1.5 rounded-sm transition-colors disabled:opacity-50 shadow-sm">Approve</button>
+                                <button onClick={() => handleInitialPaymentStatus(order.id, 'Rejected', order.totalAmount)} disabled={updating} className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-sm transition-colors disabled:opacity-50 shadow-sm">Reject</button>
+                              </div>
+                            )}
+                          </div>
+                          {order.initialPaymentStatus === 'Rejected' && order.initialPaymentRejectReason && (
+                            <div className="mt-2 text-xs text-red-600 italic">Reason: {order.initialPaymentRejectReason}</div>
+                          )}
+                        </div>
+                      )}
 
                       {order.amountPaid >= order.totalAmount && (
                         <div className="bg-green-50 text-green-700 border border-green-200 px-4 py-3 rounded-sm text-xs font-bold flex flex-col items-center justify-center gap-2 uppercase tracking-wider mb-4">

@@ -109,7 +109,7 @@ export default function Home() {
                                         <i className="fa-solid fa-bolt"></i> New Season Collection — 2026
                                     </div>
                                     <h1 className="hero-title">
-                                        The Future of <span className="accent">Tech</span> Is Here
+                                        Nigeria's <span className="accent">Trusted Store</span> for UK Used &amp; Brand New Phones and Laptops
                                     </h1>
                                     <p className="hero-sub">
                                         Experience the pinnacle of innovation. From flagship smartphones to ultra-powerful laptops — upgrade your life with zero hidden fees.

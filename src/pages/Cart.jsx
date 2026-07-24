@@ -19,8 +19,8 @@ import {
   createPaymentSuccessNotification
 } from '../utils/notificationService';
 
-// â”€â”€ Klump BNPL
-const KLUMP_PUBLIC_KEY = 'klp_pk_test_5695101996134cf198d9241433a1a9e0b219fe82ec42464db113beea89c94967';
+// ── Klump BNPL
+const KLUMP_PUBLIC_KEY = 'klp_pk_4ce49cef6ab247b69abd5a9901c9ec7411d7c3eb98714b8f8e254962e70591c7';
 let klumpScriptPromise = null;
 function loadKlumpScript() {
   if (klumpScriptPromise) return klumpScriptPromise;
@@ -40,7 +40,7 @@ function getKlump() {
   try { return (0, eval)('Klump'); } catch (e) { return undefined; }
 }
 
-// â”€â”€ Bank account details
+// ── Bank account details
 const BANK_ACCOUNT = {
   bank: 'Premium Trust Bank',
   name: 'Neo Tech Gadget',
@@ -60,11 +60,8 @@ export default function Cart() {
   const [klumpOpen, setKlumpOpen] = useState(false);
 
   useEffect(() => {
-    if (isAdmin) {
-      toast.error('Admin accounts cannot access the shopping cart');
-      navigate('/admin');
-    }
-  }, [isAdmin, navigate]);
+    // Admin access allowed for POS checkout
+  }, [isAdmin]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -182,8 +179,11 @@ export default function Cart() {
     if (klumpOpen) {
       interval = setInterval(() => {
         document.querySelectorAll('iframe[src*="klump"], [id^="klump"]').forEach(el => {
-          if (el.style && el.id !== 'klump__checkout') {
+          if (el.style) {
             el.style.setProperty('z-index', '2147483640', 'important');
+            if (el.id === 'klump__checkout') {
+              el.style.setProperty('position', 'fixed', 'important');
+            }
           }
         });
       }, 500);
@@ -201,13 +201,14 @@ export default function Cart() {
   };
 
 
-  // â”€â”€ Klump BNPL handler
+  // ── Klump BNPL handler
   const handleKlumpPayment = async () => {
     setLoading(true);
     setKlumpOpen(true);
     setError('');
     const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
-    const totalWithDelivery = Math.ceil(totalToPayNow + deliveryDetails.price);
+    const subtotalOnly = Math.ceil(totalToPayNow);
+    const shippingFee = deliveryDetails.price || 0;
     try {
       await loadKlumpScript();
       const KlumpCtor = getKlump();
@@ -215,8 +216,8 @@ export default function Cart() {
       new KlumpCtor({
         publicKey: KLUMP_PUBLIC_KEY,
         data: {
-          amount: totalWithDelivery,
-          shipping_fee: deliveryDetails.price,
+          amount: subtotalOnly,
+          shipping_fee: shippingFee,
           currency: 'NGN',
           redirect_url: `${window.location.origin}/profile`,
           merchant_reference: `NT-${Date.now()}`,
@@ -242,6 +243,9 @@ export default function Cart() {
           setLoading(false);
           setKlumpOpen(false);
         },
+        onLoad: () => {
+          // Klump overlay is now visible
+        },
         onClose: () => {
           setLoading(false);
           setKlumpOpen(false);
@@ -254,7 +258,7 @@ export default function Cart() {
     }
   };
 
-  // â”€â”€ Submit order (bank transfer or after Klump)
+  // ── Submit order (bank transfer or after Klump)
   const submitOrder = async (klumpRef = null) => {
     setLoading(true);
     setError('');
@@ -277,10 +281,13 @@ export default function Cart() {
 
       // Upload receipt for bank transfer
       let receiptUrl = '';
-      if (!isKlump && receiptFile) {
+      if (!isKlump && payMethod === 'bank_transfer' && receiptFile) {
         const { uploadImage } = await import('../utils/uploadImage');
         receiptUrl = await uploadImage(receiptFile);
       }
+
+      const isKlump = !!klumpRef;
+      const isAdminCash = payMethod === 'admin_cash';
 
       const orderTotalAmount = items.reduce((acc, i) => {
         if (i.paymentChoice === 'full') return acc + i.price * i.quantity;
@@ -300,10 +307,10 @@ export default function Cart() {
         deliveryInfo,
         deliveryFee: deliveryDetails.price,
         totalAmount: orderTotalAmount,
-        amountPaid: isKlump ? Math.ceil(totalToPayNow + deliveryDetails.price) : 0,
-        status: isKlump ? 'Processing' : 'Pending Verification',
-        paymentMethod: isKlump ? 'klump_bnpl' : 'bank_transfer',
-        paymentRef: klumpRef || `BT-${Date.now()}`,
+        amountPaid: isKlump ? Math.ceil(totalToPayNow + deliveryDetails.price) : (isAdminCash ? orderTotalAmount : 0),
+        status: isKlump ? 'Processing' : (isAdminCash ? 'Completed' : 'Pending Verification'),
+        paymentMethod: isKlump ? 'klump_bnpl' : (isAdminCash ? 'admin_cash' : 'bank_transfer'),
+        paymentRef: klumpRef || (isAdminCash ? `CASH-${Date.now()}` : `BT-${Date.now()}`),
         receiptUrl,
         createdAt: new Date(),
       }));
@@ -665,7 +672,8 @@ export default function Cart() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {[
                     { id: 'bank_transfer', label: 'Direct Bank Transfer', icon: CreditCard, desc: 'Transfer to our account & upload receipt' },
-                    { id: 'klump_bnpl', label: 'Klump â€” Buy Now, Pay Later', icon: ShieldCheck, desc: 'Pay in installments via Klump' },
+                    { id: 'klump_bnpl', label: 'Klump — Buy Now, Pay Later', icon: ShieldCheck, desc: 'Pay in installments via Klump' },
+                    ...(isAdmin ? [{ id: 'admin_cash', label: 'Admin POS / Cash', icon: Zap, desc: 'Direct order placement (Admin only)' }] : []),
                   ].map(m => (
                     <div key={m.id} onClick={() => { setPayMethod(m.id); setError(''); }}
                       style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: `2px solid ${payMethod === m.id ? '#D42B2B' : '#2A2A30'}`, borderRadius: 12, cursor: 'pointer', background: payMethod === m.id ? 'rgba(212,43,43,0.07)' : '#1E1E22', transition: 'all 0.2s' }}>
