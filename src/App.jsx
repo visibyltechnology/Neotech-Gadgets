@@ -190,7 +190,7 @@ const SplashScreen = () => (
 );
 
 function App() {
-  const { user, init, loading } = useAuthStore();
+  const { user, isAdmin, init, loading } = useAuthStore();
 
   useEffect(() => { init(); }, [init]);
 
@@ -246,7 +246,7 @@ function App() {
           <Route path="/terms"          element={<Terms />} />
           <Route path="/privacy"        element={<PrivacyPolicy />} />
 
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={user && isAdmin ? <AdminLayout /> : <Navigate to="/" />}>
             <Route index              element={<ProductManager />} />
             <Route path="categories"  element={<CategoryManager />} />
             <Route path="brands"      element={<BrandManager />} />

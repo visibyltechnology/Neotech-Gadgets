@@ -115,9 +115,14 @@ export default function Navbar() {
                         </form>
 
                         {user ? (
-                            <Link to="/profile" className="nav-icon-btn hidden sm:flex" aria-label="Account">
-                                <i className="fa-solid fa-user"></i>
-                            </Link>
+                            <div className="hidden sm:flex items-center gap-2">
+                                <Link to="/profile" className="nav-icon-btn" aria-label="Account">
+                                    <i className="fa-solid fa-user"></i>
+                                </Link>
+                                <button onClick={handleLogout} className="nav-icon-btn text-brandRed hover:text-red-500" aria-label="Logout" title="Logout">
+                                    <i className="fa-solid fa-sign-out-alt"></i>
+                                </button>
+                            </div>
                         ) : (
                             <Link to="/login" className="nav-icon-btn hidden sm:flex" aria-label="Login">
                                 <i className="fa-solid fa-user"></i>
