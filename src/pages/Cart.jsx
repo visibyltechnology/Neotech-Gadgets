@@ -207,8 +207,17 @@ export default function Cart() {
     setKlumpOpen(true);
     setError('');
     const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
-    const subtotalOnly = Math.ceil(totalToPayNow);
     const shippingFee = deliveryDetails.price || 0;
+    // Klump validates: amount + shipping_fee === sum(unit_price * quantity)
+    // So amount must be the exact full-price subtotal of cart items
+    const klumpItems = items.map(i => ({
+      image_url: i.img || i.image || '',
+      item_url: `${window.location.origin}/products/${i.id}`,
+      name: i.name,
+      unit_price: Math.ceil(i.price),
+      quantity: i.quantity,
+    }));
+    const klumpSubtotal = klumpItems.reduce((acc, i) => acc + i.unit_price * i.quantity, 0);
     try {
       await loadKlumpScript();
       const KlumpCtor = getKlump();
@@ -216,7 +225,7 @@ export default function Cart() {
       new KlumpCtor({
         publicKey: KLUMP_PUBLIC_KEY,
         data: {
-          amount: subtotalOnly,
+          amount: klumpSubtotal,
           shipping_fee: shippingFee,
           currency: 'NGN',
           redirect_url: `${window.location.origin}/profile`,
@@ -225,13 +234,7 @@ export default function Cart() {
             customer: user?.displayName || user?.email?.split('@')[0] || 'Customer',
             email: user?.email || '',
           },
-          items: items.map(i => ({
-            image_url: i.img || i.image || '',
-            item_url: `${window.location.origin}/products/${i.id}`,
-            name: i.name,
-            unit_price: i.price,
-            quantity: i.quantity,
-          })),
+          items: klumpItems,
         },
         onSuccess: async (data) => {
           setKlumpOpen(false);
