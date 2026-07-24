@@ -25,8 +25,8 @@ export default function PrivacyPolicy() {
         {/* Intro */}
         <div className="bg-white border border-gray-200 rounded-sm p-6 mb-6 shadow-sm">
           <p className="text-sm text-gray-700 leading-relaxed font-medium">
-            Mayjay Concepts ("we", "our", "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website{' '}
-            <a href="https://www.mayjay-electronics.com.ng" className="text-lime-600 hover:underline font-bold">https://www.mayjay-electronics.com.ng</a>{' '}
+            Neotech Gadgets ("we", "our", "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website{' '}
+            <a href="https://www.neotechgadgets.ng" className="text-lime-600 hover:underline font-bold">https://www.neotechgadgets.ng</a>{' '}
             and make purchases from us.
           </p>
           <p className="text-sm text-gray-700 font-medium mt-3">
@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
                       { icon: 'fa-user', label: 'Identity Data', desc: 'First name, last name' },
                       { icon: 'fa-envelope', label: 'Contact Data', desc: 'Email address, phone number' },
                       { icon: 'fa-map-marker-alt', label: 'Delivery Data', desc: 'Delivery address, state, LGA, landmark' },
-                      { icon: 'fa-credit-card', label: 'Payment Data', desc: 'Processed securely by Korapay — we do not store card details' },
+                      { icon: 'fa-credit-card', label: 'Payment Data', desc: 'Processed securely by Klump BNPL or direct bank transfer — we do not store card details' },
                       { icon: 'fa-mouse-pointer', label: 'Technical Data', desc: 'IP address, browser type, and device data' },
                       { icon: 'fa-shopping-cart', label: 'Transaction Data', desc: 'Details of products purchased and payment records' },
                     ].map(item => (
@@ -100,7 +100,7 @@ export default function PrivacyPolicy() {
                   <p className="mb-3">We do <strong className="text-red-600">not sell</strong> your personal data to third parties. We may share your information with:</p>
                   <ul className="space-y-2">
                     {[
-                      'Korapay — to securely process your payments.',
+                      'Klump BNPL — to securely process your installment payments.',
                       'Logistics and courier partners — to fulfill your delivery.',
                       'WhatsApp Business (Meta) — to send you order and OTP notifications.',
                       'Firebase (Google) — for secure data storage and authentication.',
@@ -120,7 +120,7 @@ export default function PrivacyPolicy() {
               icon: 'fa-lock',
               title: 'Data Security',
               content: (
-                <p>We implement appropriate technical and organisational security measures to protect your personal data against accidental loss, unauthorised access, and disclosure. Your account password is hashed and never stored in plain text. Payment data is processed entirely through Korapay's PCI-DSS compliant infrastructure — Mayjay Concepts does not store your card details on our servers.</p>
+                <p>We implement appropriate technical and organisational security measures to protect your personal data against accidental loss, unauthorised access, and disclosure. Your account password is hashed and never stored in plain text. Payment data is processed entirely through Klump's PCI-DSS compliant infrastructure or verified via secure bank transfer — Neotech Gadgets does not store your card details on our servers.</p>
               )
             },
             {
@@ -144,7 +144,7 @@ export default function PrivacyPolicy() {
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-3 text-sm">To exercise any of these rights, message us on WhatsApp: <a href="https://wa.me/2347066514355" target="_blank" rel="noreferrer" className="text-green-600 hover:underline font-bold">07066514355</a> or call <strong>09116763595</strong>.</p>
+                  <p className="mt-3 text-sm">To exercise any of these rights, message us on WhatsApp or call: <a href="https://wa.me/2348135933346" target="_blank" rel="noreferrer" className="text-green-600 hover:underline font-bold">08135933346</a>.</p>
                 </>
               )
             },
@@ -180,8 +180,8 @@ export default function PrivacyPolicy() {
                 <>
                   <p className="mb-3">For any questions about this Privacy Policy or your personal data, contact our Data Protection Officer:</p>
                   <ul className="space-y-1.5 text-sm font-medium">
-                    <li><i className="fab fa-whatsapp mr-2 text-green-500"></i><strong>WhatsApp:</strong> <a href="https://wa.me/2347066514355" target="_blank" rel="noreferrer" className="text-green-600 hover:underline font-bold">07066514355</a> | <span className="font-medium">09116763595</span></li>
-                    <li><i className="fas fa-map-marker-alt mr-2 text-lime-600"></i><strong>Address:</strong> Shop 3, Aboderin Shopping Complex, beside California Luxury Hotel and Suites, Agbaje-Orita Challenge, Ibadan.</li>
+                    <li><i className="fab fa-whatsapp mr-2 text-green-500"></i><strong>WhatsApp/Phone:</strong> <a href="https://wa.me/2348135933346" target="_blank" rel="noreferrer" className="text-green-600 hover:underline font-bold">08135933346</a></li>
+                    <li><i className="fas fa-map-marker-alt mr-2 text-lime-600"></i><strong>Address:</strong> C38 Robinson Pz deco road Warri delta state</li>
                   </ul>
                 </>
               )

@@ -390,13 +390,13 @@ export default function Home() {
                         <h2 style={{ fontFamily: 'Rajdhani,sans-serif', fontSize: '2.5rem', fontWeight: 800, color: '#fff', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Stay Ahead of the Tech Curve</h2>
                         <p style={{ color: '#8888A0', marginBottom: '2rem', maxWidth: 500, margin: '0 auto 2rem' }}>Get exclusive deals, early access, and product drops straight to your inbox.</p>
                         
-                        <form onSubmit={handleNewsletter} style={{ display: 'flex', gap: '0.75rem', maxWidth: 480, margin: '0 auto', flexWrap: 'wrap' }}>
+                        <form onSubmit={handleNewsletter} style={{ display: 'flex', gap: '0.75rem', maxWidth: 480, margin: '0 auto', flexDirection: 'column' }} className="sm:flex-row">
                             <input 
                                 type="email" 
                                 placeholder="Enter your email address" 
                                 required 
                                 aria-label="Email address"
-                                style={{ flex: 1, minWidth: 200, padding: '1rem 1.5rem', background: '#181820', border: '1px solid #2C2C3A', borderRadius: 12, color: '#fff', outline: 'none' }}
+                                style={{ flex: 1, width: '100%', padding: '1rem 1.5rem', background: '#181820', border: '1px solid #2C2C3A', borderRadius: 12, color: '#fff', outline: 'none' }}
                                 onFocus={e => e.target.style.borderColor = '#D42B2B'}
                                 onBlur={e => e.target.style.borderColor = '#2C2C3A'}
                             />

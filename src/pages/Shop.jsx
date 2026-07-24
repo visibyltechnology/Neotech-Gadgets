@@ -208,10 +208,10 @@ export default function Shop() {
                 </div>
             </div>
 
-            <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '2rem 1.5rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', flex: 1, width: '100%' }}>
+            <div className="px-4 sm:px-6" style={{ maxWidth: '80rem', margin: '0 auto', paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', flex: 1, width: '100%' }}>
                 
                 {/* ── Sidebar Filters ── */}
-                <div style={{ width: '100%', maxWidth: 260, flexShrink: 0 }}>
+                <div style={{ width: '100%', flexShrink: 0 }} className="sm:max-w-[260px]">
                     <div style={{ background: '#161618', border: '1px solid #2A2A30', borderRadius: 16, overflow: 'hidden', position: 'sticky', top: 100 }}>
                         {/* Categories */}
                         <div style={{ padding: '1rem', borderBottom: '1px solid #2A2A30', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

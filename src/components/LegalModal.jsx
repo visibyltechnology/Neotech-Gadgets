@@ -8,7 +8,7 @@ const TERMS_CONTENT = (
       </p>
     </div>
 
-    <p>Welcome to <strong className="text-gray-900">Mayjay Concepts!</strong> These Terms and Conditions ("Terms") govern your use of our website at <strong>https://www.mayjay-electronics.com.ng</strong> and the purchase of any electronics or products from us. By accessing the Site or purchasing a product, you agree to be bound by these Terms.</p>
+    <p>Welcome to <strong className="text-gray-900">Neotech Gadgets!</strong> These Terms and Conditions ("Terms") govern your use of our website at <strong>https://www.neotechgadgets.ng</strong> and the purchase of any electronics or products from us. By accessing the Site or purchasing a product, you agree to be bound by these Terms.</p>
 
     {[
       {
@@ -17,15 +17,15 @@ const TERMS_CONTENT = (
       },
       {
         n: '2', title: 'Product Information and Pricing',
-        body: 'We strive to be as accurate as possible with product descriptions, technical specifications, and images. However, Mayjay Concepts does not warrant that product descriptions are 100% accurate. In the event of a pricing error, Mayjay Concepts reserves the right to refuse or cancel orders, and if payment has been processed, a full refund will be issued.'
+        body: 'We strive to be as accurate as possible with product descriptions, technical specifications, and images. However, Neotech Gadgets does not warrant that product descriptions are 100% accurate. In the event of a pricing error, Neotech Gadgets reserves the right to refuse or cancel orders, and if payment has been processed, a full refund will be issued.'
       },
       {
         n: '3', title: 'Payments and Billing',
-        body: 'All payments are securely processed through Korapay. We accept Naira debit cards (Visa, MasterCard, Verve), bank transfers, and pay-with-bank options. By submitting an order, you authorize Mayjay Concepts (via Korapay) to charge your designated payment method for the full order amount.'
+        body: 'All payments are securely processed through Klump BNPL or verified via direct bank transfer. We accept installment payments and direct account transfers. By submitting an order, you authorize Neotech Gadgets to process your designated payment method for the full order amount.'
       },
       {
         n: '4', title: 'Shipping, Delivery, and Risk of Loss',
-        body: 'Delivery dates given at checkout are estimates only and cannot be guaranteed. Mayjay Concepts is not liable for delays caused by local dispatch services or factors beyond our control. Risk of loss and title for items pass to you upon our delivery to the courier/logistics partner.'
+        body: 'Delivery dates given at checkout are estimates only and cannot be guaranteed. Neotech Gadgets is not liable for delays caused by local dispatch services or factors beyond our control. Risk of loss and title for items pass to you upon our delivery to the courier/logistics partner.'
       },
     ].map(s => (
       <div key={s.n}>
@@ -44,24 +44,24 @@ const TERMS_CONTENT = (
         <h3 className="font-black text-white uppercase tracking-wider text-xs">5. Strict No-Return and No-Refund Policy</h3>
       </div>
       <div className="p-4 bg-red-50 space-y-2">
-        <p className="font-bold text-red-800"><strong>Final Sale:</strong> All sales on Mayjay Concepts are final. We enforce a strict No-Return and No-Refund policy once an item has been purchased and successfully dispatched or delivered.</p>
+        <p className="font-bold text-red-800"><strong>Final Sale:</strong> All sales on Neotech Gadgets are final. We enforce a strict No-Return and No-Refund policy once an item has been purchased and successfully dispatched or delivered.</p>
         <p className="text-red-700"><strong>Inspection Upon Delivery:</strong> Customers are strongly advised to inspect their electronics thoroughly at the point of delivery before signing off with the courier.</p>
-        <p className="text-red-700"><strong>Manufacturer Warranties:</strong> Mayjay Concepts itself does not provide additional store warranties. For any technical faults discovered after delivery, your sole remedy is to contact the manufacturer's authorized service center in Nigeria.</p>
+        <p className="text-red-700"><strong>Manufacturer Warranties:</strong> Neotech Gadgets itself does not provide additional store warranties. For any technical faults discovered after delivery, your sole remedy is to contact the manufacturer's authorized service center in Nigeria.</p>
       </div>
     </div>
 
     {[
       {
         n: '6', title: 'Intellectual Property',
-        body: 'All content on this Site — including text, graphics, logos, images, and software — is the property of Mayjay Concepts or its content suppliers and is protected by Nigerian and international copyright, trademark, and intellectual property laws.'
+        body: 'All content on this Site — including text, graphics, logos, images, and software — is the property of Neotech Gadgets or its content suppliers and is protected by Nigerian and international copyright, trademark, and intellectual property laws.'
       },
       {
         n: '7', title: 'Limitation of Liability',
-        body: 'To the maximum extent permitted by applicable Nigerian law, Mayjay Concepts shall not be liable for any indirect, incidental, special, consequential, or punitive damages including loss of profits, data, product failure, electrical surges, battery degradation, or personal injury resulting from the use or misuse of electronics purchased through the Site. Our total liability shall not exceed the amount you paid for the specific product in question.'
+        body: 'To the maximum extent permitted by applicable Nigerian law, Neotech Gadgets shall not be liable for any indirect, incidental, special, consequential, or punitive damages including loss of profits, data, product failure, electrical surges, battery degradation, or personal injury resulting from the use or misuse of electronics purchased through the Site. Our total liability shall not exceed the amount you paid for the specific product in question.'
       },
       {
         n: '8', title: 'User Conduct & Prohibited Uses',
-        body: 'You agree not to use the Site for any unlawful purpose, to infringe upon our intellectual property rights, to upload viruses or malicious code, or to engage in fraudulent chargeback schemes via Korapay.'
+        body: 'You agree not to use the Site for any unlawful purpose, to infringe upon our intellectual property rights, to upload viruses or malicious code, or to engage in fraudulent chargeback schemes.'
       },
       {
         n: '9', title: 'Governing Law',
@@ -69,7 +69,7 @@ const TERMS_CONTENT = (
       },
       {
         n: '10', title: 'Changes to These Terms',
-        body: 'Mayjay Concepts reserves the right to update or modify these Terms at any time without prior notice. Your continued use of the Site following any changes constitutes your acceptance of the new Terms.'
+        body: 'Neotech Gadgets reserves the right to update or modify these Terms at any time without prior notice. Your continued use of the Site following any changes constitutes your acceptance of the new Terms.'
       },
     ].map(s => (
       <div key={s.n}>
@@ -86,7 +86,7 @@ const TERMS_CONTENT = (
         <span className="w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0">11</span>
         Contact Information
       </h3>
-      <p>WhatsApp: <a href="https://wa.me/2347066514355" target="_blank" rel="noreferrer">07066514355</a> | Phone: 09116763595 | Address: Shop 3, Aboderin Shopping Complex, beside California Luxury Hotel and Suites, Agbaje-Orita Challenge, Ibadan.</p>
+      <p>WhatsApp/Phone: <a href="https://wa.me/2348135933346" target="_blank" rel="noreferrer">08135933346</a> | Address: C38 Robinson Pz deco road Warri delta state</p>
     </div>
 
     <div className="bg-gray-100 border border-gray-200 rounded-sm p-4 text-center">
@@ -97,12 +97,12 @@ const TERMS_CONTENT = (
 
 const PRIVACY_CONTENT = (
   <div className="space-y-6 text-sm text-gray-700 leading-relaxed font-medium">
-    <p>Mayjay Concepts ("we", "our", "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information. This policy is aligned with the <strong className="text-gray-900">Nigeria Data Protection Regulation (NDPR)</strong> issued by NITDA.</p>
+    <p>Neotech Gadgets ("we", "our", "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information. This policy is aligned with the <strong className="text-gray-900">Nigeria Data Protection Regulation (NDPR)</strong> issued by NITDA.</p>
 
     {[
       {
         n: '1', title: 'Information We Collect', icon: 'fa-database',
-        body: 'We may collect: Identity Data (first name, last name), Contact Data (email address, phone number), Delivery Data (address, state, LGA, landmark), Payment Data (processed securely by Korapay — we do not store card details), Technical Data (IP address, browser type, device data), and Transaction Data (products purchased and payment records).'
+        body: 'We may collect: Identity Data (first name, last name), Contact Data (email address, phone number), Delivery Data (address, state, LGA, landmark), Payment Data (processed securely by Klump BNPL or bank transfer — we do not store card details), Technical Data (IP address, browser type, device data), and Transaction Data (products purchased and payment records).'
       },
       {
         n: '2', title: 'How We Use Your Information', icon: 'fa-cogs',
@@ -110,15 +110,15 @@ const PRIVACY_CONTENT = (
       },
       {
         n: '3', title: 'Sharing Your Information', icon: 'fa-share-alt',
-        body: 'We do NOT sell your personal data to third parties. We may share your information only with: Korapay (to process payments), logistics and courier partners (to fulfill delivery), WhatsApp Business/Meta (to send order and OTP notifications), Firebase/Google (for secure data storage and authentication), and law enforcement or regulatory bodies (FCCPC, NITDA) if required by law.'
+        body: 'We do NOT sell your personal data to third parties. We may share your information only with: Klump BNPL (to process installment payments), logistics and courier partners (to fulfill delivery), WhatsApp Business/Meta (to send order and OTP notifications), Firebase/Google (for secure data storage and authentication), and law enforcement or regulatory bodies (FCCPC, NITDA) if required by law.'
       },
       {
         n: '4', title: 'Data Security', icon: 'fa-lock',
-        body: 'We implement appropriate technical and organisational security measures to protect your personal data against accidental loss, unauthorised access, and disclosure. Your account password is hashed and never stored in plain text. Payment data is processed entirely through Korapay\'s PCI-DSS compliant infrastructure — Mayjay Concepts does not store your card details on our servers.'
+        body: 'We implement appropriate technical and organisational security measures to protect your personal data against accidental loss, unauthorised access, and disclosure. Your account password is hashed and never stored in plain text. Payment data is processed entirely through Klump\'s PCI-DSS compliant infrastructure or secure direct transfers — Neotech Gadgets does not store your card details on our servers.'
       },
       {
         n: '5', title: 'Your Rights Under Nigerian Law (NDPR)', icon: 'fa-user-shield',
-        body: 'Under the NDPR, you have the right to: request access to the personal data we hold about you, request correction of inaccurate or incomplete data, request erasure of your personal data (subject to legal retention requirements), object to or restrict how we process your data, and lodge a complaint with NITDA if you believe your data rights have been violated. To exercise these rights, contact us at support@mayjay-electronics.com.ng.'
+        body: 'Under the NDPR, you have the right to: request access to the personal data we hold about you, request correction of inaccurate or incomplete data, request erasure of your personal data (subject to legal retention requirements), object to or restrict how we process your data, and lodge a complaint with NITDA if you believe your data rights have been violated. To exercise these rights, contact us at Neotechgadget001@gmail.com.'
       },
       {
         n: '6', title: 'Cookies', icon: 'fa-cookie',

@@ -201,10 +201,11 @@ export async function sendRegistrationOTPEmail(toEmail, name, otpCode) {
   return _send(
     TEMPLATES.OTP,
     {
-      email: toEmail,
-      name,
-      otp: otpCode,
-      code: otpCode,
+      email: toEmail || '',
+      name: name || 'User',
+      otp: otpCode || '',
+      code: otpCode || '',
+      message_box: '',
     },
     GMAIL_REG_SERVICE_ID,
     GMAIL_REG_PUBLIC_KEY
@@ -217,10 +218,11 @@ export async function sendRegistrationOTPEmail(toEmail, name, otpCode) {
  */
 export async function sendForgotPasswordOTPEmail(toEmail, name, otpCode) {
   return _send(TEMPLATES.RESET_PASSWORD, {
-    email: toEmail,
-    name,
-    otp: otpCode,
-    code: otpCode,
+    email: toEmail || '',
+    name: name || 'User',
+    otp: otpCode || '',
+    code: otpCode || '',
+    message_box: '',
   });
 }
 
@@ -270,12 +272,13 @@ export async function sendOrderOTPEmail(userId, orderId, otpCode) {
 
   // Fallback to the OTP template (supports {{otp}} / {{code}}) if dedicated template fails
   if (!sent) {
+    const msg = `🚚 Delivery code for order #${orderId}: ${otpCode}\n\nItems:\n${itemsSummaryText}`;
     return _send(TEMPLATES.OTP, {
       email,
       name,
       otp: otpCode,
       code: otpCode,
-      message: `🚚 Delivery code for order #${orderId}: ${otpCode}\n\nItems:\n${itemsSummaryText}`,
+      message_box: `<div style="margin-top:24px;background:#161618;border-left:3px solid #D42B2B;border-radius:0 10px 10px 0;padding:16px 20px;"><p style="margin:0;font-size:13px;color:#C8C8D4;line-height:1.7;white-space:pre-line;">${msg}</p></div>`,
     });
   }
   return sent;
@@ -347,12 +350,13 @@ export async function sendTrackingUpdateEmail(userId, orderId, status, notes = '
   );
 
   if (!sent) {
+    const msg = `📦 Order #${orderId} — ${statusLabel}${notes ? '\n' + notes : ''}\n\nItems:\n${itemsSummaryText}`;
     return _send(TEMPLATES.OTP, {
       email,
       name,
       otp: '',
       code: '',
-      message: `📦 Order #${orderId} — ${statusLabel}${notes ? '\n' + notes : ''}\n\nItems:\n${itemsSummaryText}`,
+      message_box: `<div style="margin-top:24px;background:#161618;border-left:3px solid #D42B2B;border-radius:0 10px 10px 0;padding:16px 20px;"><p style="margin:0;font-size:13px;color:#C8C8D4;line-height:1.7;white-space:pre-line;">${msg}</p></div>`,
     });
   }
   return sent;
@@ -369,12 +373,13 @@ export async function sendOrderDeliveredEmail(userId, orderId) {
  * Send password reset success email.
  */
 export async function sendPasswordResetSuccessEmail(toEmail, name) {
+  const msg = 'Your password has been successfully reset. If you did not make this change, please contact support immediately.';
   return _send(TEMPLATES.OTP, {
     email: toEmail,
     name,
     otp: '',
     code: '',
-    message: 'Your password has been successfully reset. If you did not make this change, please contact support immediately.',
+    message_box: `<div style="margin-top:24px;background:#161618;border-left:3px solid #D42B2B;border-radius:0 10px 10px 0;padding:16px 20px;"><p style="margin:0;font-size:13px;color:#C8C8D4;line-height:1.7;white-space:pre-line;">${msg}</p></div>`,
   });
 }
 

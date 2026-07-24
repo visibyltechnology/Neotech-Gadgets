@@ -16,6 +16,10 @@
   html {
     scroll-behavior: smooth;
   }
+  
+  html, body {
+    overflow-x: hidden;
+  }
 
   body {
     margin: 0;
@@ -70,7 +74,12 @@
 .container {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
+}
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem;
+  }
 }
 
 /* ====================================================
@@ -86,8 +95,11 @@
   overflow: hidden;
   background: linear-gradient(145deg, #181820 0%, #0D0D12 100%);
   border: 1px solid var(--border);
-  padding: clamp(2.5rem,5vw,5rem);
+  padding: 2rem 1.25rem;
   box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+}
+@media (min-width: 640px) {
+  .hero-card { padding: clamp(2.5rem,5vw,5rem); }
 }
 
 .hero-pattern {
@@ -330,9 +342,16 @@
 ==================================================== */
 .cat-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
-  gap: 1rem;
-  margin: 2.5rem 0 4rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 2rem 0 3rem;
+}
+@media (min-width: 640px) {
+  .cat-bar {
+    grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+    gap: 1rem;
+    margin: 2.5rem 0 4rem;
+  }
 }
 .cat-item {
   background: var(--bg-card);
@@ -378,12 +397,17 @@
   background: linear-gradient(135deg, #1A0808 0%, #220C0C 50%, #150505 100%);
   border: 1px solid var(--red-border);
   border-radius: var(--radius-lg);
-  padding: 1.75rem 2.5rem;
+  padding: 1.5rem 1.25rem;
   gap: 1.5rem;
   flex-wrap: wrap;
   margin-bottom: 5rem;
   position: relative;
   overflow: hidden;
+}
+@media (min-width: 640px) {
+  .deal-banner {
+    padding: 1.75rem 2.5rem;
+  }
 }
 .deal-banner::before {
   content: '';
@@ -410,28 +434,36 @@
 }
 .deal-title { font-size: 1.5rem; color: #fff; margin: 0; }
 .deal-sub { font-size: 0.875rem; color: var(--text-muted); margin-top: 2px; }
-.deal-timer { display: flex; gap: 0.75rem; z-index: 1; }
+.deal-timer { display: flex; gap: 0.5rem; z-index: 1; flex-shrink: 0; }
 .timer-block {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   background: rgba(0,0,0,0.3); border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm); padding: 0.6rem 0.9rem; min-width: 58px;
+  border-radius: var(--radius-sm); padding: 0.5rem 0.6rem; min-width: 48px;
+}
+@media (min-width: 640px) {
+  .timer-block { padding: 0.6rem 0.9rem; min-width: 58px; }
 }
 .timer-num {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1;
+  font-size: 1.3rem; font-weight: 800; color: #fff; line-height: 1;
 }
+@media (min-width: 640px) { .timer-num { font-size: 1.6rem; } }
 .timer-label {
-  font-size: 0.55rem; text-transform: uppercase;
-  letter-spacing: 0.12em; color: var(--text-muted); font-weight: 700;
+  font-size: 0.5rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700;
 }
 
 /* ====================================================
    SECTION HEADERS
 ==================================================== */
 .section-header {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  margin-bottom: 2rem; padding-bottom: 1.25rem;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 0.75rem;
+  margin-bottom: 1.5rem; padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
+}
+@media (min-width: 640px) {
+  .section-header { margin-bottom: 2rem; padding-bottom: 1.25rem; align-items: flex-end; }
 }
 .section-label { display: flex; align-items: center; gap: 12px; }
 .section-bar {
@@ -452,9 +484,19 @@
 ==================================================== */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
-  gap: 1.5rem;
-  margin-bottom: 5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 3rem;
+}
+@media (min-width: 480px) {
+  .products-grid { gap: 1rem; }
+}
+@media (min-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+    gap: 1.5rem;
+    margin-bottom: 5rem;
+  }
 }
 
 /* Product Card */
@@ -545,12 +587,13 @@
 .p-card:hover .p-img img { transform: scale(1.1) rotate(-2deg); }
 
 .p-body {
-  padding: 1.25rem;
+  padding: 0.9rem;
   display: flex;
   flex-direction: column;
   flex: 1;
   gap: 0.5rem;
 }
+@media (min-width: 640px) { .p-body { padding: 1.25rem; } }
 .p-rating { display: flex; align-items: center; gap: 5px; }
 .p-stars { color: #F5A623; font-size: 0.7rem; letter-spacing: 1px; }
 .p-reviews { font-size: 0.68rem; color: var(--text-dim); }
@@ -703,10 +746,17 @@
 /* ====================================================
    TESTIMONIALS
 ==================================================== */
-.testimonials-section { margin-bottom: 5rem; }
+.testimonials-section { margin-bottom: 3rem; }
+@media (min-width: 640px) { .testimonials-section { margin-bottom: 5rem; } }
 .testi-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
-  gap: 1.25rem; margin-top: 2rem;
+  display: grid; grid-template-columns: 1fr;
+  gap: 1rem; margin-top: 1.5rem;
+}
+@media (min-width: 640px) {
+  .testi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+    gap: 1.25rem; margin-top: 2rem;
+  }
 }
 .testi-card {
   background: var(--bg-card); border: 1px solid var(--border);

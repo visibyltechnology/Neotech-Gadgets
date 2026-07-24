@@ -151,7 +151,7 @@ export default function ProductDetail() {
 
   return (
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0E0E10' }}>
-      <div style={{ maxWidth: '80rem', mx: 'auto', padding: '2rem 1.5rem', width: '100%', flex: 1 }}>
+      <div className="px-4 sm:px-6" style={{ maxWidth: '80rem', mx: 'auto', paddingTop: '2rem', paddingBottom: '2rem', width: '100%', flex: 1 }}>
         
         {/* Breadcrumb / Back */}
         <div style={{ marginBottom: '1.5rem' }}>

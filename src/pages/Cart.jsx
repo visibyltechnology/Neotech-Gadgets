@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
-import { collection, addDoc, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { Trash2, ArrowLeft, ShoppingBag, Upload, CreditCard, ShieldCheck, CheckCircle, Zap } from 'lucide-react';
+import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import useCartStore from '../store/useCartStore';
 import useAuthStore from '../store/useAuthStore';
@@ -18,14 +19,45 @@ import {
   createPaymentSuccessNotification
 } from '../utils/notificationService';
 
+// â”€â”€ Klump BNPL
+const KLUMP_PUBLIC_KEY = 'klp_pk_test_5695101996134cf198d9241433a1a9e0b219fe82ec42464db113beea89c94967';
+let klumpScriptPromise = null;
+function loadKlumpScript() {
+  if (klumpScriptPromise) return klumpScriptPromise;
+  klumpScriptPromise = new Promise((resolve, reject) => {
+    const scriptId = 'klump-js-script';
+    if (document.getElementById(scriptId)) { resolve(); return; }
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = 'https://js.useklump.com/klump.js';
+    script.onload = () => resolve();
+    script.onerror = () => { klumpScriptPromise = null; reject(new Error('Failed to load Klump script')); };
+    document.body.appendChild(script);
+  });
+  return klumpScriptPromise;
+}
+function getKlump() {
+  try { return (0, eval)('Klump'); } catch (e) { return undefined; }
+}
+
+// â”€â”€ Bank account details
+const BANK_ACCOUNT = {
+  bank: 'Premium Trust Bank',
+  name: 'Neo Tech Gadget',
+  number: '0040250513',
+};
+
+
 function fmt(n) {
   return '₦' + Math.ceil(n).toLocaleString('en-NG');
 }
+
 
 export default function Cart() {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuthStore();
   const { items, removeFromCart, updateQuantity, getInitialPaymentTotal, clearCart } = useCartStore();
+  const [klumpOpen, setKlumpOpen] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -139,254 +171,180 @@ export default function Cart() {
 
   const totalToPayNow = getInitialPaymentTotal();
 
-  const loadKorapayScript = () => new Promise((resolve, reject) => {
-    if (window.Korapay) { resolve(); return; }
-    const existing = document.querySelector('script[data-korapay]');
-    if (existing) existing.remove();
-    const s = document.createElement('script');
-    s.src = 'https://korablobstorage.blob.core.windows.net/modal-bucket/korapay-collections.min.js';
-    s.setAttribute('data-korapay', 'true');
-    s.onload = () => resolve();
-    s.onerror = () => { s.remove(); reject(new Error('Korapay script failed to load')); };
-    document.head.appendChild(s);
-  });
+  // Payment method state
+  const [payMethod, setPayMethod] = useState('bank_transfer'); // 'bank_transfer' | 'klump_bnpl'
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState(null);
 
-  const handleCheckout = async () => {
-    if (!user || !user.uid) {
-      setError('User session expired. Please log in again.');
-      return;
+  // Klump z-index fix
+  useEffect(() => {
+    let interval;
+    if (klumpOpen) {
+      interval = setInterval(() => {
+        document.querySelectorAll('iframe[src*="klump"], [id^="klump"]').forEach(el => {
+          if (el.style && el.id !== 'klump__checkout') {
+            el.style.setProperty('z-index', '2147483640', 'important');
+          }
+        });
+      }, 500);
     }
-    if (items.length === 0) return;
-    if (window.paymentProcessed) return;
-    window.paymentProcessed = true;
+    return () => clearInterval(interval);
+  }, [klumpOpen]);
 
+  const handleReceiptChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReceiptFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setReceiptPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+
+  // â”€â”€ Klump BNPL handler
+  const handleKlumpPayment = async () => {
+    setLoading(true);
+    setKlumpOpen(true);
+    setError('');
+    const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
+    const totalWithDelivery = Math.ceil(totalToPayNow + deliveryDetails.price);
+    try {
+      await loadKlumpScript();
+      const KlumpCtor = getKlump();
+      if (!KlumpCtor) throw new Error('Klump payment service unavailable. Check your connection.');
+      new KlumpCtor({
+        publicKey: KLUMP_PUBLIC_KEY,
+        data: {
+          amount: totalWithDelivery,
+          shipping_fee: deliveryDetails.price,
+          currency: 'NGN',
+          redirect_url: `${window.location.origin}/profile`,
+          merchant_reference: `NT-${Date.now()}`,
+          meta_data: {
+            customer: user?.displayName || user?.email?.split('@')[0] || 'Customer',
+            email: user?.email || '',
+          },
+          items: items.map(i => ({
+            image_url: i.img || i.image || '',
+            item_url: `${window.location.origin}/products/${i.id}`,
+            name: i.name,
+            unit_price: i.price,
+            quantity: i.quantity,
+          })),
+        },
+        onSuccess: async (data) => {
+          setKlumpOpen(false);
+          const klumpRef = data?.data?.reference || `NT-${Date.now()}`;
+          await submitOrder(klumpRef);
+        },
+        onError: () => {
+          setError('Klump payment failed or was declined. Please try again or choose Bank Transfer.');
+          setLoading(false);
+          setKlumpOpen(false);
+        },
+        onClose: () => {
+          setLoading(false);
+          setKlumpOpen(false);
+        },
+      });
+    } catch (err) {
+      setError(err.message || 'Failed to load Klump. Please check your connection.');
+      setLoading(false);
+      setKlumpOpen(false);
+    }
+  };
+
+  // â”€â”€ Submit order (bank transfer or after Klump)
+  const submitOrder = async (klumpRef = null) => {
     setLoading(true);
     setError('');
+    const isKlump = !!klumpRef;
+    const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
 
     try {
-      const itemsToValidate = splitMode ? expandedItems : items;
-      for (const item of itemsToValidate) {
-        if (!item.quantity || item.quantity < 1 || !Number.isInteger(item.quantity)) {
-          throw new Error('Invalid quantity detected. Checkout aborted.');
-        }
-        if (item.paymentChoice === 'installment' && ![2, 3, 4, 5, 6].includes(item.installments)) {
-          throw new Error('Invalid installment period detected. Checkout aborted.');
-        }
-
+      // Validate & refresh prices
+      for (const item of items) {
         const productDoc = await getDoc(doc(db, 'products', item.id));
         if (!productDoc.exists()) throw new Error(`Product ${item.name} no longer exists.`);
         const dbProduct = productDoc.data();
-        
         item.price = dbProduct.price;
         if (item.paymentChoice === 'installment') {
-           const baseRate = INTEREST_RATES_DECIMAL[item.installments] ?? 0.2;
-           const rate = baseRate * (item.paymentFrequency === 'weekly' ? 0.5 : 1);
-           const fullAmount = dbProduct.price * (1 + rate);
-           item.periodPayment = fullAmount / item.installments;
+          const baseRate = INTEREST_RATES_DECIMAL[item.installments] ?? 0.2;
+          const rate = baseRate * (item.paymentFrequency === 'weekly' ? 0.5 : 1);
+          item.periodPayment = (dbProduct.price * (1 + rate)) / item.installments;
         }
       }
 
-      const koraKey = import.meta.env.VITE_KORA_PUBLIC_KEY;
-      if (!koraKey) {
-        toast.error('Payment key is missing. Please contact support.');
-        setLoading(false);
-        window.paymentProcessed = false;
-        return;
+      // Upload receipt for bank transfer
+      let receiptUrl = '';
+      if (!isKlump && receiptFile) {
+        const { uploadImage } = await import('../utils/uploadImage');
+        receiptUrl = await uploadImage(receiptFile);
       }
+
+      const orderTotalAmount = items.reduce((acc, i) => {
+        if (i.paymentChoice === 'full') return acc + i.price * i.quantity;
+        const baseRate = INTEREST_RATES_DECIMAL[i.installments] ?? 0.2;
+        const rate = baseRate * (i.paymentFrequency === 'weekly' ? 0.5 : 1);
+        return acc + (i.price * (1 + rate)) * i.quantity;
+      }, 0) + deliveryDetails.price;
+
+      for (const item of items) {
+        try { await decreaseInventory(item.id, Number(item.quantity)); }
+        catch (e) { console.error('Inventory error:', e); }
+      }
+
+      const orderRef = await addDoc(collection(db, 'orders'), initializeOrderTracking({
+        userId: user.uid,
+        items,
+        deliveryInfo,
+        deliveryFee: deliveryDetails.price,
+        totalAmount: orderTotalAmount,
+        amountPaid: isKlump ? Math.ceil(totalToPayNow + deliveryDetails.price) : 0,
+        status: isKlump ? 'Processing' : 'Pending Verification',
+        paymentMethod: isKlump ? 'klump_bnpl' : 'bank_transfer',
+        paymentRef: klumpRef || `BT-${Date.now()}`,
+        receiptUrl,
+        createdAt: new Date(),
+      }));
 
       try {
-        await loadKorapayScript();
-      } catch {
-        toast.error('Could not load payment gateway. Check your connection and try again.');
-        setLoading(false);
-        window.paymentProcessed = false;
-        return;
-      }
+        await createOrderPlacedNotification(user.uid, orderRef.id, items.length);
+        const payFreq = items.find(i => i.paymentFrequency)?.paymentFrequency;
+        await createPaymentSuccessNotification(user.uid, orderRef.id, totalToPayNow + deliveryDetails.price, {
+          itemCount: items.length,
+          remainingBalance: orderTotalAmount - (totalToPayNow + deliveryDetails.price),
+          paymentFrequency: payFreq,
+        });
+      } catch (e) { console.error('Notification error:', e); }
 
-      if (!window.Korapay) {
-        toast.error('Payment gateway failed to initialise. Please refresh and try again.');
-        setLoading(false);
-        window.paymentProcessed = false;
-        return;
-      }
-
-      const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
-      let paymentAmount = Math.ceil(totalToPayNow + deliveryDetails.price);
-      const MINIMUM_PAYMENT = 1000;
-      if (paymentAmount < MINIMUM_PAYMENT && paymentAmount > 0) paymentAmount = MINIMUM_PAYMENT;
-
-      const paymentRef = `NT_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-      let paymentProcessed = false;
-      const safetyTimer = setTimeout(() => {
-        if (!paymentProcessed) { setLoading(false); window.paymentProcessed = false; }
-      }, 90000);
-
-      window.Korapay.initialize({
-        key: koraKey,
-        reference: paymentRef,
-        amount: paymentAmount,
-        currency: "NGN",
-        metadata: { orderId: paymentRef, itemCount: items.length, source: 'web' },
-        customer: {
-            name: user.displayName || user.email.split('@')[0],
-            email: user.email
-        },
-        onSuccess: async function(response) {
-            if (paymentProcessed) return;
-            paymentProcessed = true;
-            clearTimeout(safetyTimer);
-            setLoading(true);
-            toast.success("Verifying payment...");
-            try {
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            } catch (verifyErr) {
-              console.warn('Payment verification error:', verifyErr);
-            }
-            toast.success("Payment verified! Processing order...");
-            
-            try {
-              if (splitMode) {
-                const groups = buildGroupMap(expandedItems);
-                const deliveryDetails2 = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
-                for (const [gId, groupUnits] of Object.entries(groups)) {
-                  if (groupUnits.length === 0) continue;
-                  const merged = {};
-                  groupUnits.forEach(unit => {
-                    if (!merged[unit.cartItemId]) merged[unit.cartItemId] = { ...unit, quantity: 0 };
-                    merged[unit.cartItemId].quantity += 1;
-                  });
-                  const groupItems = Object.values(merged);
-                  const groupTotalAmount = groupItems.reduce((acc, i) => {
-                    if (i.paymentChoice === 'full') return acc + i.price * i.quantity;
-                    const baseRate = INTEREST_RATES_DECIMAL[i.installments] ?? 0.2;
-                    const rate = baseRate * (i.paymentFrequency === 'weekly' ? 0.5 : 1);
-                    return acc + (i.price * (1 + rate)) * i.quantity;
-                  }, 0) + deliveryDetails2.price;
-                  const groupTotalToPayNow = groupItems.reduce((acc, i) => acc + (i.paymentChoice === 'full' ? i.price * i.quantity : (i.periodPayment || 0) * i.quantity), 0) + deliveryDetails2.price;
-
-                  for (const item of groupItems) {
-                    try {
-                      await decreaseInventory(item.id, Number(item.quantity));
-                    } catch (inventoryErr) {
-                      console.error('Error updating inventory for item:', item.id, inventoryErr);
-                    }
-                  }
-
-                  const orderRef = await addDoc(collection(db, "orders"), initializeOrderTracking({
-                    userId: user.uid,
-                    items: groupItems,
-                    deliveryInfo: deliveryInfo,
-                    deliveryFee: deliveryDetails2.price,
-                    totalAmount: groupTotalAmount,
-                    amountPaid: groupTotalToPayNow,
-                    status: 'Processing',
-                    paymentRef: response.reference || `REF_${Date.now()}_G${gId}`,
-                    createdAt: new Date(),
-                  }));
-                  
-                  try {
-                    await createOrderPlacedNotification(user.uid, orderRef.id, groupItems.length);
-                    const payFreq = groupItems.find(i => i.paymentFrequency)?.paymentFrequency;
-                    await createPaymentSuccessNotification(user.uid, orderRef.id, groupTotalToPayNow, {
-                      itemCount: groupItems.length,
-                      remainingBalance: groupTotalAmount - groupTotalToPayNow,
-                      paymentFrequency: payFreq
-                    });
-                  } catch (notifErr) {
-                    console.error('Error creating notifications:', notifErr);
-                  }
-                }
-              } else {
-                const deliveryDetails3 = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
-                for (const item of items) {
-                  try {
-                    await decreaseInventory(item.id, Number(item.quantity));
-                  } catch (inventoryErr) {
-                    console.error('Error updating inventory for item:', item.id, inventoryErr);
-                  }
-                }
-
-                const orderTotalAmount = items.reduce((acc, i) => {
-                  if (i.paymentChoice === 'full') return acc + i.price * i.quantity;
-                  const baseRate = INTEREST_RATES_DECIMAL[i.installments] ?? 0.2;
-                  const rate = baseRate * (i.paymentFrequency === 'weekly' ? 0.5 : 1);
-                  return acc + (i.price * (1 + rate)) * i.quantity;
-                }, 0) + deliveryDetails3.price;
-                const orderRef = await addDoc(collection(db, "orders"), initializeOrderTracking({
-                  userId: user.uid,
-                  items: items,
-                  deliveryInfo: deliveryInfo,
-                  deliveryFee: deliveryDetails3.price,
-                  totalAmount: orderTotalAmount,
-                  amountPaid: totalToPayNow + deliveryDetails3.price,
-                  status: 'Processing',
-                  paymentRef: response.reference || `REF_${Date.now()}`,
-                  createdAt: new Date(),
-                }));
-                
-                try {
-                  await createOrderPlacedNotification(user.uid, orderRef.id, items.length);
-                  const payFreq2 = items.find(i => i.paymentFrequency)?.paymentFrequency;
-                  await createPaymentSuccessNotification(user.uid, orderRef.id, totalToPayNow + deliveryDetails3.price, {
-                    itemCount: items.length,
-                    remainingBalance: orderTotalAmount - (totalToPayNow + deliveryDetails3.price),
-                    paymentFrequency: payFreq2
-                  });
-                } catch (notifErr) {
-                  console.error('Error creating notifications:', notifErr);
-                }
-              }
-
-              clearCart();
-              toast.success('Order placed successfully!');
-              setShowPreview(false);
-              setLoading(false);
-              navigate('/profile');
-            } catch (err) {
-              console.error("Error saving order:", err);
-              setError("Payment successful but failed to save order. Please contact support.");
-              setLoading(false);
-            }
-        },
-        onClose: function() {
-            clearTimeout(safetyTimer);
-            setLoading(false);
-            window.paymentProcessed = false;
-            if (!paymentProcessed) toast.error("Payment was cancelled.");
-        },
-        onFailed: function(response) {
-            clearTimeout(safetyTimer);
-            setLoading(false);
-            window.paymentProcessed = false;
-            const msg = response?.data?.message || response?.message || "Payment failed. Please try again.";
-            toast.error(msg);
-            setError(msg);
-        },
-        onTokenized: async function(response) {
-            try {
-              if (response?.data?.customer?.token) {
-                const tokenRef = doc(db, 'payment_tokens', user.uid);
-                await setDoc(tokenRef, {
-                  token: response.data.customer.token,
-                  email: user.email,
-                  provider: 'korapay',
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
-                }, { merge: true });
-              }
-            } catch (tokenErr) {
-              console.error('Failed to save payment token:', tokenErr);
-            }
-        }
-      });
+      clearCart();
+      toast.success(isKlump ? 'Order placed successfully!' : 'Order submitted! We will verify your receipt shortly.');
+      setShowPreview(false);
       setLoading(false);
+      navigate('/profile');
     } catch (err) {
-      console.error("Error in checkout:", err);
-      setError(err.message || "Failed to initiate payment. Please contact support.");
+      console.error('submitOrder error:', err);
+      setError(err.message || 'Failed to place order. Please try again.');
       setLoading(false);
-      window.paymentProcessed = false;
     }
   };
+
+  const handleCheckout = async () => {
+    if (!user || !user.uid) { setError('User session expired. Please log in again.'); return; }
+    if (items.length === 0) return;
+    if (payMethod === 'bank_transfer' && !receiptFile) {
+      setError('Please upload your payment receipt before placing the order.');
+      return;
+    }
+    setError('');
+    if (payMethod === 'klump_bnpl') {
+      await handleKlumpPayment();
+    } else {
+      await submitOrder();
+    }
+  };
+
 
   const inputStyle = {
     width: '100%',
@@ -419,7 +377,7 @@ export default function Cart() {
 
   return (
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0E0E10' }}>
-      <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '2rem 1.5rem', width: '100%', flex: 1 }}>
+      <div className="px-4 sm:px-6" style={{ maxWidth: '80rem', margin: '0 auto', paddingBottom: '2rem', paddingTop: '2rem', width: '100%', flex: 1 }}>
         <Link to="/products" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', fontWeight: 700, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em', textDecoration: 'none', transition: 'color 0.2s', marginBottom: '2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#E8E8F0'} onMouseLeave={e => e.currentTarget.style.color = '#707080'}>
           <ArrowLeft size={16} /> Continue Shopping
         </Link>
@@ -652,7 +610,7 @@ export default function Cart() {
               </button>
 
               <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: '0.65rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-                <i className="fas fa-lock"></i> Secure Checkout (Test Mode)
+                <i className="fas fa-lock"></i> Secured by Klump &amp; Bank Transfer
               </div>
             </div>
           </div>
@@ -661,208 +619,159 @@ export default function Cart() {
       </div>
       <Footer />
 
-      {/* Confirm Order Preview Modal */}
+      {/* Klump cancel overlay */}
+      {klumpOpen && createPortal(
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0,
+          zIndex: 2147483647, display: 'flex', justifyContent: 'flex-end',
+          padding: '12px 16px', pointerEvents: 'none',
+        }}>
+          <button
+            onClick={() => {
+              try {
+                const klumpDiv = document.getElementById('klump__checkout');
+                if (klumpDiv) klumpDiv.innerHTML = '';
+                document.querySelectorAll('[id^="klump"]').forEach(el => { if (el.id !== 'klump__checkout') el.remove(); });
+                document.querySelectorAll('iframe[src*="klump"]').forEach(el => el.remove());
+                setKlumpOpen(false); setLoading(false);
+                setError('Klump payment cancelled. Please choose Bank Transfer or try again.');
+              } catch { window.location.reload(); }
+            }}
+            style={{ pointerEvents: 'auto', background: '#B30000', color: '#fff', border: 'none', borderRadius: '50px', padding: '12px 22px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >âœ• Cancel Payment</button>
+        </div>,
+        document.body
+      )}
+      <div id="klump__checkout" style={{ display: klumpOpen ? 'block' : 'none' }}></div>
+
+      {/* Confirm Order Modal */}
       {showPreview && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#161618', border: '1px solid #2A2A30', borderRadius: 24, width: '100%', maxWidth: 720, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
-            
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#161618', border: '1px solid #2A2A30', borderRadius: 24, width: '100%', maxWidth: 600, maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+
+            {/* Modal Header */}
             <div style={{ background: 'linear-gradient(135deg,#1E1E22,#161618)', borderBottom: '1px solid #2A2A30', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#E8E8F0', textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'Rajdhani, sans-serif', margin: 0 }}>Confirm Your Order</h2>
-              <button onClick={() => { setShowPreview(false); window.paymentProcessed = false; }} style={{ background: 'none', border: 'none', color: '#707080', cursor: 'pointer', fontSize: '1.25rem', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#D42B2B'} onMouseLeave={e => e.currentTarget.style.color = '#707080'}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#E8E8F0', textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'Rajdhani, sans-serif', margin: 0 }}>Confirm &amp; Pay</h2>
+              <button onClick={() => { setShowPreview(false); setError(''); }} style={{ background: 'none', border: 'none', color: '#707080', cursor: 'pointer', fontSize: '1.25rem' }} onMouseEnter={e => e.currentTarget.style.color = '#D42B2B'} onMouseLeave={e => e.currentTarget.style.color = '#707080'}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
-            
-            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
-              {/* Delivery Info */}
-              <div style={{ background: '#1E1E22', border: '1px solid #2A2A30', borderRadius: 12, padding: '1.25rem', marginBottom: '2rem' }}>
-                <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <i className="fas fa-map-marker-alt" style={{ color: '#D42B2B' }}></i> Delivery Info
-                </h3>
-                <p style={{ fontWeight: 700, fontSize: '0.85rem', color: '#E8E8F0', marginBottom: 4 }}>{deliveryInfo.address}</p>
-                <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#9898A8', marginBottom: 4 }}>{deliveryInfo.city}, {deliveryInfo.state}</p>
-                <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#9898A8' }}>Phone: {deliveryInfo.phone}</p>
+
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+              {/* Payment Method Selection */}
+              <div>
+                <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 }}>Choose Payment Method</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    { id: 'bank_transfer', label: 'Direct Bank Transfer', icon: CreditCard, desc: 'Transfer to our account & upload receipt' },
+                    { id: 'klump_bnpl', label: 'Klump â€” Buy Now, Pay Later', icon: ShieldCheck, desc: 'Pay in installments via Klump' },
+                  ].map(m => (
+                    <div key={m.id} onClick={() => { setPayMethod(m.id); setError(''); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: `2px solid ${payMethod === m.id ? '#D42B2B' : '#2A2A30'}`, borderRadius: 12, cursor: 'pointer', background: payMethod === m.id ? 'rgba(212,43,43,0.07)' : '#1E1E22', transition: 'all 0.2s' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(212,43,43,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <m.icon size={18} color="#D42B2B" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#E8E8F0' }}>{m.label}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#707080' }}>{m.desc}</div>
+                      </div>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${payMethod === m.id ? '#D42B2B' : '#505060'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {payMethod === m.id && <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#D42B2B' }}></div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                {(() => {
-                  const installmentSigs = items
-                    .filter(i => i.paymentChoice !== 'full')
-                    .map(i => `${i.paymentFrequency}-${i.installments}`);
-                  const hasSingleOrderConflict = new Set(installmentSigs).size > 1;
-
-                  return (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 16, borderBottom: '1px solid #2A2A30', paddingBottom: 16 }}>
-                      <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                        <i className="fas fa-box" style={{ color: '#D42B2B' }}></i> Order Items
-                      </h3>
-                      <button
-                        onClick={() => { splitMode ? exitSplitMode() : enterSplitMode(); }}
-                        style={{
-                          padding: '6px 12px', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', borderRadius: 6, transition: 'all 0.2s', border: 'none', cursor: 'pointer',
-                          background: splitMode ? '#2A2A30' : hasSingleOrderConflict ? 'rgba(212,43,43,0.1)' : 'rgba(34,197,94,0.1)',
-                          color: splitMode ? '#C8C8D4' : hasSingleOrderConflict ? '#FF7070' : '#4ADE80',
-                          border: splitMode ? '1px solid #505060' : hasSingleOrderConflict ? '1px solid rgba(212,43,43,0.3)' : '1px solid rgba(34,197,94,0.3)'
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)' }}
-                        onMouseLeave={e => { e.currentTarget.style.filter = 'none' }}
-                      >
-                        {splitMode ? '← Merge into Single Order' : hasSingleOrderConflict ? '⚠️ Resolve Conflicting Orders' : 'Split into Multiple Orders'}
-                      </button>
-                    </div>
-                  );
-                })()}
-
-                {splitMode ? (() => {
-                  const groupMap = buildGroupMap(expandedItems);
-                  const conflicts = getGroupConflicts(groupMap);
-                  const hasAnyConflict = Object.keys(conflicts).length > 0;
-
-                  return (
-                    <>
-                      {Object.entries(groupMap).sort(([a],[b]) => Number(a)-Number(b)).map(([gId, groupUnits]) => {
-                        const conflict = conflicts[gId];
-                        const hasConflict = !!conflicts[gId];
-                        return (
-                          <div key={gId} style={{ marginBottom: '1.5rem', background: '#1E1E22', border: hasConflict ? '1px solid #FF7070' : '1px solid #2A2A30', borderRadius: 12, overflow: 'hidden' }}>
-                            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: hasConflict ? 'rgba(212,43,43,0.1)' : '#161618', borderBottom: hasConflict ? '1px solid rgba(212,43,43,0.2)' : '1px solid #2A2A30' }}>
-                              <strong style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: hasConflict ? '#FF7070' : '#E8E8F0' }}>Order {gId}</strong>
-                              {groupUnits.some(u => u.paymentChoice !== 'full') && (
-                                <button
-                                  onClick={() => {
-                                    const firstSig = groupUnits.find(u => u.paymentChoice !== 'full');
-                                    if (!firstSig) return;
-                                    const targetFreq = firstSig.paymentFrequency;
-                                    const targetDur = firstSig.installments;
-                                    setExpandedItems(prev => prev.map(unit => {
-                                      if ((itemGroups[unit.splitId] || 1) === Number(gId) && unit.paymentChoice !== 'full') {
-                                        const newPeriodPayment = recalcPeriodPayment(unit, targetFreq, targetDur);
-                                        return { ...unit, paymentFrequency: targetFreq, installments: targetDur, periodPayment: newPeriodPayment };
-                                      }
-                                      return unit;
-                                    }));
-                                  }}
-                                  style={{
-                                    padding: '4px 10px', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', borderRadius: 6, transition: 'all 0.2s', border: 'none', cursor: 'pointer',
-                                    background: hasConflict ? '#D42B2B' : '#2A2A30',
-                                    color: hasConflict ? '#fff' : '#C8C8D4'
-                                  }}
-                                >
-                                  {hasConflict ? '⚠️ Unify Plans' : 'Unify Plans'}
-                                </button>
-                              )}
-                            </div>
-                            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            {groupUnits.map(unit => (
-                              <div key={unit.splitId} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '0.75rem', background: '#161618', border: '1px solid #2A2A30', borderRadius: 8 }}>
-                                
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#707080' }}>1×</span>
-                                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E8E8F0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>{unit.name}</span>
-                                  <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.1em' }}>({unit.paymentChoice === 'full' ? 'Full' : `${unit.installments} ${unit.paymentFrequency === 'weekly' ? 'Wks' : 'Mos'}`})</span>
-                                </div>
-                                
-                                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#C8C8D4', width: 80, textAlign: 'right', paddingRight: 8, borderRight: '1px solid #2A2A30', fontFamily: 'Rajdhani, sans-serif' }}>{fmt(unit.paymentChoice === 'full' ? unit.price : unit.periodPayment || 0)}</span>
-                                  
-                                  <select
-                                    value={itemGroups[unit.splitId] || 1}
-                                    onChange={(e) => setItemGroups(prev => ({ ...prev, [unit.splitId]: Number(e.target.value) }))}
-                                    style={{ background: '#161618', border: '1px solid #2A2A30', color: '#E8E8F0', fontSize: '0.75rem', fontWeight: 700, borderRadius: 6, padding: '4px 8px', outline: 'none' }}
-                                  >
-                                    {[1,2,3,4,5].map(n => <option key={n} value={n}>Order {n}</option>)}
-                                  </select>
-
-                                  {unit.paymentChoice !== 'full' && (
-                                    <>
-                                      <select
-                                        value={unit.paymentFrequency}
-                                        onChange={(e) => {
-                                          const newFreq = e.target.value;
-                                          const newPP = recalcPeriodPayment(unit, newFreq, unit.installments);
-                                          setExpandedItems(prev => prev.map(u => u.splitId === unit.splitId ? { ...u, paymentFrequency: newFreq, periodPayment: newPP } : u));
-                                        }}
-                                        style={{ background: '#161618', border: '1px solid #2A2A30', color: '#E8E8F0', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, borderRadius: 6, padding: '4px 8px', outline: 'none' }}
-                                      >
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                      </select>
-                                      <select
-                                        value={unit.installments}
-                                        onChange={(e) => {
-                                          const newDur = Number(e.target.value);
-                                          const newPP = recalcPeriodPayment(unit, unit.paymentFrequency, newDur);
-                                          setExpandedItems(prev => prev.map(u => u.splitId === unit.splitId ? { ...u, installments: newDur, periodPayment: newPP } : u));
-                                        }}
-                                        style={{ background: '#161618', border: '1px solid #2A2A30', color: '#E8E8F0', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, borderRadius: 6, padding: '4px 8px', outline: 'none' }}
-                                      >
-                                        {[2,3,4,5,6].map(n => (
-                                          <option key={n} value={n}>{n} {unit.paymentFrequency === 'weekly' ? 'Wks' : 'Mos'}</option>
-                                        ))}
-                                      </select>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {hasAnyConflict && (
-                        <div style={{ background: 'rgba(240,165,0,0.1)', border: '1px solid rgba(240,165,0,0.3)', color: '#F0A500', fontSize: '0.75rem', fontWeight: 800, padding: '1rem', borderRadius: 8, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <i className="fas fa-exclamation-triangle"></i> Resolve all conflicts above before proceeding.
-                        </div>
-                      )}
-
-                      <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', padding: '1rem', borderRadius: 8, fontSize: '0.75rem', fontWeight: 800, color: '#4ADE80', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center', marginBottom: '1.5rem' }}>
-                        {Object.keys(groupMap).length} separate order{Object.keys(groupMap).length > 1 ? 's' : ''} will be created.
+              {/* Bank Transfer Details */}
+              {payMethod === 'bank_transfer' && (
+                <div style={{ background: '#0E0E10', border: '1px solid #D42B2B', borderRadius: 14, padding: '1.25rem' }}>
+                  <h4 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D42B2B', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CreditCard size={14} /> Account Details
+                  </h4>
+                  <div style={{ display: 'grid', gap: 10, marginBottom: 16 }}>
+                    {[['Bank', BANK_ACCOUNT.bank], ['Account Name', BANK_ACCOUNT.name]].map(([label, value]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#707080' }}>{label}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#C8C8D4' }}>{value}</span>
                       </div>
+                    ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#707080' }}>Account No.</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#D42B2B', fontFamily: 'monospace', letterSpacing: '3px' }}>{BANK_ACCOUNT.number}</span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.7rem', color: '#9898A8', marginBottom: 12 }}>Transfer exactly <strong style={{ color: '#E8E8F0' }}>{fmt(totalToPayNow + (deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state).price : 0))}</strong> and upload your receipt below.</p>
+                  <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, background: '#1E1E22', border: `2px dashed ${receiptFile ? '#D42B2B' : '#2A2A30'}`, borderRadius: 10, padding: '1rem', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    {receiptPreview ? (
+                      <img src={receiptPreview} alt="Receipt" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #D42B2B' }} />
+                    ) : (
+                      <Upload size={24} color="#D42B2B" />
+                    )}
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: receiptFile ? '#4ADE80' : '#707080', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      {receiptFile ? `âœ“ ${receiptFile.name}` : 'Click to upload receipt *'}
+                    </span>
+                    <input type="file" accept="image/*,application/pdf" onChange={handleReceiptChange} style={{ display: 'none' }} />
+                  </label>
+                </div>
+              )}
 
-                      <div style={{ display: 'flex', gap: 16 }}>
-                        <button onClick={() => setShowPreview(false)} style={{ flex: 1, background: '#1E1E22', border: '1px solid #2A2A30', color: '#C8C8D4', fontWeight: 800, padding: '1rem', borderRadius: 12, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15em', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#2A2A30'} onMouseLeave={e => e.currentTarget.style.background = '#1E1E22'}>
-                          Cancel
-                        </button>
-                        <button onClick={handleCheckout} disabled={loading || hasAnyConflict} style={{ flex: 1, background: 'linear-gradient(135deg,#D42B2B,#A01E1E)', color: '#fff', border: 'none', fontWeight: 800, padding: '1rem', borderRadius: 12, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15em', cursor: loading || hasAnyConflict ? 'not-allowed' : 'pointer', opacity: loading || hasAnyConflict ? 0.7 : 1, transition: 'all 0.2s' }} onMouseEnter={e => { if(!loading && !hasAnyConflict) e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { if(!loading && !hasAnyConflict) e.currentTarget.style.transform = 'translateY(0)' }}>
-                          {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i> Processing...</> : 'Proceed to Payment'}
-                        </button>
+              {/* Klump Info */}
+              {payMethod === 'klump_bnpl' && (
+                <div style={{ background: '#0E0E10', border: '1px solid #2A2A30', borderRadius: 14, padding: '1.25rem' }}>
+                  <h4 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D42B2B', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ShieldCheck size={14} /> Buy Now, Pay Later with Klump
+                  </h4>
+                  <p style={{ fontSize: '0.75rem', color: '#9898A8', lineHeight: 1.6 }}>Pay for your order in easy installments. Klump handles the repayment schedule and your order ships immediately after approval.</p>
+                  <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', background: '#1E1E22', borderRadius: 10, padding: '12px 16px', border: '1px solid #2A2A30' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#707080' }}>Order Total</span>
+                    <span style={{ fontWeight: 800, color: '#D42B2B', fontSize: '1rem', fontFamily: 'Rajdhani, sans-serif' }}>{fmt(totalToPayNow + (deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state).price : 0))}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Items Summary */}
+              <div>
+                <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <i className="fas fa-box" style={{ color: '#D42B2B' }}></i> Order Items
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {items.map(item => (
+                    <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#1E1E22', border: '1px solid #2A2A30', borderRadius: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#707080' }}>{item.quantity}Ã—</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#E8E8F0' }}>{item.name}</span>
                       </div>
-                    </>
-                  );
-                })() : (
-                  <>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: '1.5rem' }}>
-                      {items.map((item) => (
-                        <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#1E1E22', border: '1px solid #2A2A30', borderRadius: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#707080' }}>{item.quantity}×</span>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#E8E8F0' }}>{item.name}</span>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '1rem', fontWeight: 800, color: '#C8C8D4', fontFamily: 'Rajdhani, sans-serif' }}>
-                              {fmt(item.paymentChoice === 'full' ? item.price * item.quantity : (item.periodPayment || 0) * item.quantity)}
-                            </span>
-                            {item.paymentChoice !== 'full' && (
-                              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                / {item.paymentFrequency === 'weekly' ? 'Wk' : 'Mo'} ({item.installments} {item.paymentFrequency === 'weekly' ? 'Wks' : 'Mos'})
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#C8C8D4', fontFamily: 'Rajdhani, sans-serif' }}>
+                        {fmt(item.paymentChoice === 'full' ? item.price * item.quantity : (item.periodPayment || 0) * item.quantity)}
+                        {item.paymentChoice !== 'full' && <span style={{ fontSize: '0.6rem', color: '#707080', fontFamily: 'Inter, sans-serif' }}>/{item.paymentFrequency === 'weekly' ? 'wk' : 'mo'}</span>}
+                      </span>
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    <div style={{ display: 'flex', gap: 16 }}>
-                      <button onClick={() => setShowPreview(false)} style={{ flex: 1, background: '#1E1E22', border: '1px solid #2A2A30', color: '#C8C8D4', fontWeight: 800, padding: '1rem', borderRadius: 12, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15em', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#2A2A30'} onMouseLeave={e => e.currentTarget.style.background = '#1E1E22'}>
-                        Cancel
-                      </button>
-                      <button onClick={handleCheckout} disabled={loading} style={{ flex: 1, background: 'linear-gradient(135deg,#D42B2B,#A01E1E)', color: '#fff', border: 'none', fontWeight: 800, padding: '1rem', borderRadius: 12, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15em', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'all 0.2s' }} onMouseEnter={e => { if(!loading) e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { if(!loading) e.currentTarget.style.transform = 'translateY(0)' }}>
-                        {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i> Processing...</> : 'Proceed to Payment'}
-                      </button>
-                    </div>
-                  </>
-                )}
+              {/* Error */}
+              {error && (
+                <div style={{ background: 'rgba(212,43,43,0.1)', border: '1px solid rgba(212,43,43,0.3)', color: '#FF7070', padding: '0.75rem', borderRadius: 8, fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <i className="fas fa-exclamation-circle"></i> {error}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => { setShowPreview(false); setError(''); }} style={{ flex: 1, background: '#1E1E22', border: '1px solid #2A2A30', color: '#C8C8D4', fontWeight: 800, padding: '1rem', borderRadius: 12, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15em', cursor: 'pointer' }}>Cancel</button>
+                <button
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  style={{ flex: 2, background: 'linear-gradient(135deg,#D42B2B,#A01E1E)', color: '#fff', border: 'none', fontWeight: 800, padding: '1rem', borderRadius: 12, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15em', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  {loading
+                    ? <><i className="fas fa-spinner fa-spin"></i> Processing...</>
+                    : <><Zap size={16} /> {payMethod === 'klump_bnpl' ? 'Pay with Klump' : 'Place Order'}</>
+                  }
+                </button>
               </div>
             </div>
           </div>
@@ -871,3 +780,4 @@ export default function Cart() {
     </main>
   );
 }
+

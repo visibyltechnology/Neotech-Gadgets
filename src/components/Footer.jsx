@@ -6,7 +6,7 @@ export default function Footer() {
     const [email, setEmail] = useState('');
     const [isSubscribed, setIsSubscribed] = useState(false);
 
-    const WHATSAPP_LINK = 'https://wa.me/2347066514355?text=Hi%20NeoTech%20Gadgets%2C%20I%20want%20to%20enquire%20about%20a%20device.';
+    const WHATSAPP_LINK = 'https://wa.me/2348135933346?text=Hi%20NeoTech%20Gadgets%2C%20I%20want%20to%20enquire%20about%20a%20device.';
 
     const handleSubscribe = (e) => {
         e.preventDefault();
@@ -72,7 +72,7 @@ export default function Footer() {
                     </div>
                     <form
                         onSubmit={handleSubscribe}
-                        className="flex w-full lg:w-auto rounded-2xl overflow-hidden shadow-2xl min-w-full sm:min-w-[440px] transition-all duration-300"
+                        className="flex flex-col sm:flex-row w-full lg:w-auto rounded-2xl overflow-hidden shadow-2xl transition-all duration-300"
                         style={{ border: '1px solid #2A2A30', background: '#111116', boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}
                     >
                         <input
@@ -95,7 +95,7 @@ export default function Footer() {
                         />
                         <button
                             type="submit"
-                            className="px-8 font-black text-[0.8rem] uppercase tracking-[0.15em] flex-shrink-0 flex items-center justify-center min-w-[140px] text-white"
+                            className="px-8 font-black text-[0.8rem] uppercase tracking-[0.15em] flex-shrink-0 flex items-center justify-center min-w-[140px] text-white py-4 sm:py-0"
                             style={{
                                 background: isSubscribed
                                     ? 'linear-gradient(135deg,#22c55e,#16a34a)'
@@ -239,7 +239,7 @@ export default function Footer() {
                             {[
                                 { label: 'My Account', to: '/profile' },
                                 { label: 'Track Delivery', to: '/delivery' },
-                                { label: 'Warranty Claims', href: 'https://wa.me/2347066514355?text=Warranty' },
+                                { label: 'Warranty Claims', href: 'https://wa.me/2348135933346?text=Warranty' },
                                 { label: 'Privacy Policy', to: '/privacy' },
                                 { label: 'Terms & Conditions', to: '/terms' },
                             ].map((l, idx) => (
@@ -307,7 +307,7 @@ export default function Footer() {
                                         <i className="fas fa-map-marker-alt" style={{ color: '#D42B2B', fontSize: '0.8rem' }}></i>
                                     </div>
                                     <p style={{ color: '#8888A0', fontSize: '0.8rem', lineHeight: 1.6, fontWeight: 500 }}>
-                                        Shop 3, Aboderin Shopping Complex, beside California Luxury Hotel, Agbaje-Orita Challenge, Ibadan.
+                                        C38 Robinson Pz deco road Warri delta state
                                     </p>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -315,7 +315,7 @@ export default function Footer() {
                                         <i className="fa-solid fa-phone" style={{ color: '#fff', fontSize: '0.8rem' }}></i>
                                     </div>
                                     <div>
-                                        <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>07066514355</div>
+                                        <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>08135933346</div>
                                         <div style={{ color: '#8888A0', fontSize: '0.75rem', marginTop: 2 }}>General Enquiries</div>
                                     </div>
                                 </div>
@@ -389,14 +389,14 @@ export default function Footer() {
                 </div>
 
                 {/* ── Bottom Bar ── */}
-                <div style={{ borderTop: '1px solid #1C1C24', paddingTop: '2rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#606075', fontWeight: 500 }}>
-                        © {year}{' '}
+                <div style={{ borderTop: '1px solid #1C1C24', paddingTop: '2rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#606075', fontWeight: 500, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+                        <span>© {year}{' '}
                         <span style={{ color: '#fff', fontWeight: 700 }}>NeoTech Gadgets Limited</span>.
-                        All Rights Reserved.
-                        <span style={{ margin: '0 12px', color: '#2A2A30' }}>|</span>
+                        All Rights Reserved.</span>
+                        <span style={{ color: '#2A2A30' }}>|</span>
                         <Link to="/privacy" style={{ color: '#606075', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = '#606075'}>Privacy Policy</Link>
-                        <span style={{ margin: '0 12px', color: '#2A2A30' }}>|</span>
+                        <span style={{ color: '#2A2A30' }}>|</span>
                         <Link to="/terms" style={{ color: '#606075', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = '#606075'}>Terms of Service</Link>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
