@@ -76,7 +76,7 @@ export const DEFAULT_CATEGORIES = [
   { name: 'Smartphones', order: 1 },
   { name: 'Tablets', order: 2 },
   { name: 'Laptops', order: 3 },
-  { name: 'Audio', order: 4 },
+  { name: 'iPhone', order: 4 },
   { name: 'Accessories', order: 5 },
   { name: 'Power Banks', order: 6 },
 ];
@@ -86,7 +86,7 @@ export const CATEGORY_STYLES = {
   'Smartphones': { bg: '#ecf9ff', text: '#0891b2', border: '#a5f3fc', dot: '#0891b2', glow: 'rgba(6,182,212,0.15)' },
   'Tablets': { bg: '#f3e8ff', text: '#a855f7', border: '#e9d5ff', dot: '#a855f7', glow: 'rgba(168,85,247,0.15)' },
   'Laptops': { bg: '#eff6ff', text: '#3b82f6', border: '#bfdbfe', dot: '#3b82f6', glow: 'rgba(59,130,246,0.15)' },
-  'Audio': { bg: '#ffe2e6', text: '#f43f5e', border: '#ffbdc7', dot: '#f43f5e', glow: 'rgba(244,63,94,0.15)' },
+  'iPhone': { bg: '#ffe2e6', text: '#f43f5e', border: '#ffbdc7', dot: '#f43f5e', glow: 'rgba(244,63,94,0.15)' },
   'Accessories': { bg: '#f3f0ff', text: '#7c3aed', border: '#ddd6fe', dot: '#7c3aed', glow: 'rgba(124,58,237,0.15)' },
   'Power Banks': { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0', dot: '#059669', glow: 'rgba(5,150,105,0.15)' },
   'All': { bg: '#f3f4f6', text: '#374151', border: '#e5e7eb', dot: '#6b7280', glow: 'rgba(0,0,0,0.08)' },

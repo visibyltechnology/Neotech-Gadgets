@@ -93,7 +93,7 @@ export default function Shop() {
                     { id: '1', name: 'iPhone 15 Pro Max 256GB', price: 1850000, category: 'Smartphones', brand: 'Apple', img: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&q=80', inventory_status: 'in_stock', items_left: 5, unlimited_stock: false, is_hidden: false, averageRating: 5, reviewCount: 124 },
                     { id: '2', name: 'Samsung Galaxy S24 Ultra', price: 1650000, category: 'Smartphones', brand: 'Samsung', img: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80', inventory_status: 'in_stock', items_left: 11, unlimited_stock: false, is_hidden: false, averageRating: 4.8, reviewCount: 89 },
                     { id: '3', name: 'ROG Zephyrus G16 Gaming Laptop', price: 2450000, category: 'Laptops', brand: 'Asus', img: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&q=80', inventory_status: 'in_stock', items_left: 2, unlimited_stock: false, is_hidden: false, averageRating: 4.9, reviewCount: 42 },
-                    { id: '4', name: 'Sony WH-1000XM5 Wireless Headphones', price: 320000, category: 'Audio', brand: 'Sony', img: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&q=80', inventory_status: 'in_stock', items_left: 0, unlimited_stock: true, is_hidden: false, averageRating: 4.7, reviewCount: 215 }
+                    { id: '4', name: 'Apple iPhone 15 Pro Max', price: 1850000, category: 'iPhone', brand: 'Apple', img: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&q=80', inventory_status: 'in_stock', items_left: 0, unlimited_stock: true, is_hidden: false, averageRating: 4.7, reviewCount: 215 }
                 ];
             } else {
                 items = items.map(ensureInventoryFields);
