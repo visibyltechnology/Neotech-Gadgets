@@ -116,7 +116,12 @@ export default function Navbar() {
 
                         {user ? (
                             <div className="hidden sm:flex items-center gap-2">
-                                <Link to="/profile" className="nav-icon-btn" aria-label="Account">
+                                {isAdmin && (
+                                    <Link to="/admin" className="nav-icon-btn text-brandRed" aria-label="Admin Panel" title="Admin Panel">
+                                        <i className="fa-solid fa-cog"></i>
+                                    </Link>
+                                )}
+                                <Link to="/profile" className="nav-icon-btn" aria-label="Account" title="My Profile">
                                     <i className="fa-solid fa-user"></i>
                                 </Link>
                                 <button onClick={handleLogout} className="nav-icon-btn text-brandRed hover:text-red-500" aria-label="Logout" title="Logout">
