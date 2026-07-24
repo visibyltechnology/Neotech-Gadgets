@@ -74,7 +74,7 @@ export default function ResetPassword() {
         email,
         otp: enteredCode,
         newPassword,
-        project: 'Mayjay Concepts'
+        project: 'Neotech Gadgets'
       });
 
       if (response.data.success) {

@@ -99,7 +99,7 @@ const useCartStore = create(
       }
     }),
     {
-      name: 'mayjay-cart-v2'
+      name: 'neotech-cart-v1'
     }
   )
 );

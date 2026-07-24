@@ -41,7 +41,7 @@ export default function AdminLayout() {
       <div className="md:hidden bg-brandBlack text-white p-4 flex justify-between items-center z-20 shadow-md border-b border-brandLime/20 shrink-0">
         <div>
           <h2 className="font-black text-lg uppercase tracking-widest text-white">
-            MAYJAY <span className="text-brandLime">ADMIN</span>
+            NEO<em className="text-[#D42B2B]">TECH</em> <span className="text-gray-400">ADMIN</span>
           </h2>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-gray-300 hover:text-white">
@@ -57,7 +57,7 @@ export default function AdminLayout() {
       `}>
         <div className="p-6 hidden md:block border-b border-gray-800">
           <h2 className="font-black text-2xl uppercase tracking-widest text-white mb-1">
-            MAYJAY <span className="text-brandLime">ADMIN</span>
+            NEO<em className="text-[#D42B2B]">TECH</em> <span className="text-gray-400">ADMIN</span>
           </h2>
           <p className="text-xs font-medium text-gray-400 break-all">{user.email}</p>
         </div>

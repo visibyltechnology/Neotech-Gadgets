@@ -169,7 +169,7 @@ export default function DeliveryPortal() {
         {/* Branding Header */}
         <div className="text-center mb-8">
           <div className="font-display text-3xl font-black tracking-tighter mb-2">
-            <span className="text-brandDark">MAYJAY</span><span className="text-brandLime">CONCEPTS</span>
+            <span className="text-white">NEO</span><em className="text-[#D42B2B] not-italic">TECH</em>
           </div>
           <h1 className="text-sm font-black text-gray-400 uppercase tracking-widest">Rider Portal</h1>
         </div>
@@ -311,7 +311,7 @@ export default function DeliveryPortal() {
         </div>
 
         <div className="mt-8 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-          <i className="fas fa-shield-alt mr-1"></i> Secured by MAYJAY Delivery System
+          <i className="fas fa-shield-alt mr-1"></i> Secured by NeoTech Delivery System
         </div>
       </div>
     </div>

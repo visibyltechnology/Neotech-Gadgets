@@ -97,7 +97,7 @@ export default function Profile() {
     try {
       window.Korapay.initialize({
         key: koraKey,
-        reference: `MAYJAY_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        reference: `NT_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
         amount: Math.round(amountToPay),
         currency: "NGN",
         customer: { name: user.displayName || user.email.split('@')[0], email: user.email },
