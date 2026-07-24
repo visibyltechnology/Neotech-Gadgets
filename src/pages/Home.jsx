@@ -112,7 +112,8 @@ export default function Home() {
                                         Nigeria's <span className="accent">Trusted Store</span> for UK Used &amp; Brand New Phones and Laptops
                                     </h1>
                                     <p className="hero-sub">
-                                        Experience the pinnacle of innovation. From flagship smartphones to ultra-powerful laptops — upgrade your life with zero hidden fees.
+                                        Shop for iPhones, laptops and all phones accessories. Nationwide delivery.<br/>
+                                        <span className="text-gray-400 font-semibold mt-2 inline-block">Buy now, or buy now and pay later with Klump</span>
                                     </p>
                                     
                                     <div className="hero-actions">
