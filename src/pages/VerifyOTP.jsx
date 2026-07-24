@@ -107,8 +107,22 @@ export default function VerifyOTP() {
         return;
       }
       const pendingData = JSON.parse(dataStr);
-      const userCredential = await createUserWithEmailAndPassword(auth, pendingData.email, pendingData.password);
-      const user = userCredential.user;
+
+      let user;
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, pendingData.email, pendingData.password);
+        user = userCredential.user;
+      } catch (authErr) {
+        if (authErr.code === 'auth/email-already-in-use') {
+          // Account was created in a previous attempt — just sign in
+          const { signInWithEmailAndPassword } = await import('firebase/auth');
+          const userCredential = await signInWithEmailAndPassword(auth, pendingData.email, pendingData.password);
+          user = userCredential.user;
+        } else {
+          throw authErr;
+        }
+      }
+
       await setDoc(doc(db, 'users', user.uid), {
         firstName: pendingData.firstName, lastName: pendingData.lastName, phone: pendingData.phone,
         email: pendingData.email, isAdmin: false, isEmailVerified: true, createdAt: new Date().toISOString()
@@ -117,7 +131,7 @@ export default function VerifyOTP() {
       sessionStorage.removeItem('registrationOTP');
       sessionStorage.removeItem('otpExpiresAt');
       toast.success('Account successfully created and verified!');
-      navigate('/shop');
+      navigate('/');
     } catch (err) {
       console.error(err);
       setError(err.message || 'Failed to verify OTP. Please try again.');

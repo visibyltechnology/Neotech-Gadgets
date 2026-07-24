@@ -74,19 +74,23 @@
 .container {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.25rem;
 }
 @media (min-width: 640px) {
-  .container {
-    padding: 0 1.5rem;
-  }
+  .container { padding: 0 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .container { padding: 0 2rem; }
 }
 
 /* ====================================================
    HERO SECTION
 ==================================================== */
 .hero {
-  padding: 3rem 0 2rem;
+  padding: 1.5rem 0 1.5rem;
+}
+@media (min-width: 640px) {
+  .hero { padding: 3rem 0 2rem; }
 }
 
 .hero-card {
@@ -471,7 +475,7 @@
   background: linear-gradient(to bottom, var(--red), #6A0000);
   border-radius: 99px; box-shadow: 0 0 12px var(--red);
 }
-.section-title { font-size: 1.75rem; font-weight: 800; color: #fff; }
+.section-title { font-size: clamp(1.1rem, 4vw, 1.75rem); font-weight: 800; color: #fff; }
 .section-link {
   font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; font-weight: 700;
   color: var(--red); letter-spacing: 0.08em; text-transform: uppercase;
@@ -493,7 +497,7 @@
 }
 @media (min-width: 768px) {
   .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1.5rem;
     margin-bottom: 5rem;
   }
@@ -599,7 +603,7 @@
 .p-reviews { font-size: 0.68rem; color: var(--text-dim); }
 
 .p-name {
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
@@ -609,6 +613,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+@media (min-width: 640px) { .p-name { font-size: 0.95rem; } }
 .p-card:hover .p-name { color: var(--red); }
 
 .p-installment {
@@ -630,11 +635,12 @@
 }
 .p-price {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #fff;
   line-height: 1;
 }
+@media (min-width: 640px) { .p-price { font-size: 1.35rem; } }
 .p-old-price {
   font-size: 0.78rem;
   color: var(--text-dim);
@@ -708,9 +714,22 @@
 ==================================================== */
 .props-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
-  gap: 1.5rem;
-  margin-bottom: 5rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+@media (min-width: 640px) {
+  .props-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+@media (min-width: 1024px) {
+  .props-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+    gap: 1.5rem;
+    margin-bottom: 5rem;
+  }
 }
 .prop-card {
   background: linear-gradient(145deg, #161620, #0E0E12);
@@ -871,18 +890,25 @@ input.nt-input::placeholder, textarea.nt-input::placeholder {
   flex-shrink: 0;
 }
 .brand-icon {
-  width: 44px; height: 44px;
+  width: 38px; height: 38px;
   border-radius: 12px;
   background: linear-gradient(135deg, #D42B2B 0%, #7A0F0F 100%);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.25rem; color: #fff;
+  font-size: 1rem; color: #fff;
   box-shadow: 0 0 18px var(--red-glow);
   transition: var(--transition);
 }
+@media (min-width: 640px) {
+  .brand-icon { width: 44px; height: 44px; font-size: 1.25rem; }
+}
 .brand:hover .brand-icon { box-shadow: 0 0 28px var(--red-glow); transform: rotate(-5deg); }
-.brand-name { font-size: 1.4rem; line-height: 1; color: #fff; }
+.brand-name { font-size: 1.2rem; line-height: 1; color: #fff; }
 .brand-name em { color: var(--red); font-style: normal; }
-.brand-sub { font-size: 0.5rem; color: var(--text-muted); letter-spacing: 0.22em; font-weight: 700; display: block; margin-top: 3px; }
+.brand-sub { display: none; }
+@media (min-width: 640px) {
+  .brand-name { font-size: 1.4rem; }
+  .brand-sub { display: block; font-size: 0.5rem; color: var(--text-muted); letter-spacing: 0.22em; font-weight: 700; margin-top: 3px; }
+}
 
 .nav-menu {
   display: none; list-style: none; align-items: center; gap: 0.25rem;
