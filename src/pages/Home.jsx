@@ -186,8 +186,7 @@ export default function Home() {
                         <div className="deal-banner-glow"></div>
                         <div className="deal-meta">
                             <span className="deal-label"><i className="fa-solid fa-bolt"></i> Flash Deal of the Day</span>
-                            <h2 className="deal-title">Samsung Galaxy S24 Ultra — 20% OFF</h2>
-                            <p className="deal-sub">Only 11 units left. Use code: <strong style={{color:'#fff'}}>NEOTECH20</strong></p>
+                            <h2 className="deal-title">Good mood deals</h2>
                         </div>
 
                         <div className="deal-timer" aria-label="Countdown timer">

@@ -313,7 +313,7 @@ export default function Shop() {
                     </div>
 
                     {loading ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                        <div className="products-grid">
                             {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
                         </div>
                     ) : filtered.length === 0 ? (
@@ -331,7 +331,7 @@ export default function Shop() {
                             </button>
                         </div>
                     ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                        <div className="products-grid">
                             {currentItems.map((p) => (
                                 <ProductCard
                                     key={p.id}
