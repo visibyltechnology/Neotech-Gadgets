@@ -8,7 +8,7 @@ import { ProductCard, SkeletonCard } from '../components/ProductCard';
 const CATEGORIES = [
     { icon: 'fa-mobile-screen-button', label: 'Smartphones', link: '/products?cat=Smartphones' },
     { icon: 'fa-laptop',               label: 'Laptops',     link: '/products?cat=Laptops' },
-    { icon: 'fa-headphones',           label: 'Audio',       link: '/products?cat=Audio' },
+    { icon: 'fa-mobile-screen',           label: 'iPhone',       link: '/products?cat=iPhone' },
     { icon: 'fa-tablet-screen-button', label: 'Tablets',     link: '/products?cat=Tablets' },
     { icon: 'fa-plug',                 label: 'Accessories', link: '/products?cat=Accessories' },
     { icon: 'fa-battery-full',         label: 'Power Banks', link: '/products?cat=Power%20Banks' },
@@ -268,14 +268,14 @@ export default function Home() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                                 <div className="featured-card" style={{ minHeight: 170 }}>
                                     <div className="featured-img">
-                                        <img src="https://images.unsplash.com/photo-1600861194942-f883de0dfe96?auto=format&fit=crop&w=600&q=70" alt="Audio Products" />
+                                        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=70" alt="iPhone Products" />
                                     </div>
                                     <div className="featured-overlay"></div>
                                     <div className="featured-content">
-                                        <span className="featured-tag"><i className="fa-solid fa-headphones"></i> Audio</span>
-                                        <h3 style={{ fontSize: '1.1rem' }}>Premium Sound</h3>
-                                        <p style={{ marginBottom: '0.5rem' }}>Immerse yourself in high-fidelity.</p>
-                                        <Link to="/products?cat=Audio" className="section-link" style={{ fontSize: '0.7rem' }}>Explore <i className="fa-solid fa-arrow-right"></i></Link>
+                                        <span className="featured-tag"><i className="fa-solid fa-mobile-screen"></i> iPhone</span>
+                                        <h3 style={{ fontSize: '1.1rem' }}>Premium iPhone</h3>
+                                        <p style={{ marginBottom: '0.5rem' }}>Latest models & best deals.</p>
+                                        <Link to="/products?cat=iPhone" className="section-link" style={{ fontSize: '0.7rem' }}>Explore <i className="fa-solid fa-arrow-right"></i></Link>
                                     </div>
                                 </div>
                                 <div className="featured-card" style={{ minHeight: 170 }}>

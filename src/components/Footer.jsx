@@ -203,7 +203,7 @@ export default function Footer() {
                                 { label: 'Smartphones', to: '/products?cat=Smartphones' },
                                 { label: 'MacBooks & Laptops', to: '/products?cat=Laptops' },
                                 { label: 'Tablets', to: '/products?cat=Tablets' },
-                                { label: 'Premium Audio', to: '/products?cat=Audio' },
+                                { label: 'Premium iPhone', to: '/products?cat=iPhone' },
                             ].map((l, idx) => (
                                 <li key={idx}>
                                     <Link
@@ -354,7 +354,7 @@ export default function Footer() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                         {[
                             'Smartphones', 'Tablets', 'Laptops',
-                            'Audio', 'Accessories', 'Power Banks'
+                            'iPhone', 'Accessories', 'Power Banks'
                         ].map((cat, idx) => (
                             <Link
                                 key={idx}

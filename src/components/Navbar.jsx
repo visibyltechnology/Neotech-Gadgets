@@ -10,7 +10,7 @@ import NotificationBell from './NotificationBell';
 export default function Navbar() {
     const [search, setSearch] = useState('');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [tickerText, setTickerText] = useState('Premium Smartphones · Laptops · Tablets · Audio · Accessories · Power Banks — Nationwide Delivery');
+    const [tickerText, setTickerText] = useState('Premium Smartphones · Laptops · Tablets · iPhone · Accessories · Power Banks — Nationwide Delivery');
     const [scrolled, setScrolled] = useState(false);
     const { user, isAdmin, logout } = useAuthStore();
     const items = useCartStore((s) => s.items);
@@ -97,7 +97,7 @@ export default function Navbar() {
                         <li><Link to="/products?cat=Smartphones" className={location.search.includes('Smartphones') ? 'active' : ''}>Phones</Link></li>
                         <li><Link to="/products?cat=Laptops" className={location.search.includes('Laptops') ? 'active' : ''}>Laptops</Link></li>
                         <li><Link to="/products?cat=Tablets" className={location.search.includes('Tablets') ? 'active' : ''}>Tablets</Link></li>
-                        <li><Link to="/products?cat=Audio" className={location.search.includes('Audio') ? 'active' : ''}>Audio</Link></li>
+                        <li><Link to="/products?cat=iPhone" className={location.search.includes('iPhone') ? 'active' : ''}>iPhone</Link></li>
                         <li><Link to="/products" className={isActive('/products') && !location.search ? 'active' : ''}>Shop All</Link></li>
                     </ul>
 
@@ -182,7 +182,7 @@ export default function Navbar() {
                                     { label: 'Phones', to: '/products?cat=Smartphones', icon: 'fa-mobile' },
                                     { label: 'Laptops', to: '/products?cat=Laptops', icon: 'fa-laptop' },
                                     { label: 'Tablets', to: '/products?cat=Tablets', icon: 'fa-tablet-screen-button' },
-                                    { label: 'Audio', to: '/products?cat=Audio', icon: 'fa-headphones' },
+                                    { label: 'iPhone', to: '/products?cat=iPhone', icon: 'fa-mobile-screen' },
                                 ].map(l => (
                                     <Link key={l.to} to={l.to} className="flex flex-col items-center justify-center gap-2 bg-[#111116] border border-[#22222E] rounded-xl p-3 text-gray-400 hover:text-white hover:border-[#D42B2B] transition-all">
                                         <i className={`fa-solid ${l.icon} text-lg text-[#D42B2B]`}></i>
