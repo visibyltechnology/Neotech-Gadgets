@@ -114,10 +114,16 @@ export default function VerifyOTP() {
         user = userCredential.user;
       } catch (authErr) {
         if (authErr.code === 'auth/email-already-in-use') {
-          // Account was created in a previous attempt — just sign in
-          const { signInWithEmailAndPassword } = await import('firebase/auth');
-          const userCredential = await signInWithEmailAndPassword(auth, pendingData.email, pendingData.password);
-          user = userCredential.user;
+          try {
+            const { signInWithEmailAndPassword } = await import('firebase/auth');
+            const userCredential = await signInWithEmailAndPassword(auth, pendingData.email, pendingData.password);
+            user = userCredential.user;
+          } catch (signInErr) {
+            if (signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password') {
+              throw new Error('An account with this email already exists, but the password entered during registration does not match. Please go to the Login page to sign in or reset your password.');
+            }
+            throw signInErr;
+          }
         } else {
           throw authErr;
         }
@@ -134,8 +140,14 @@ export default function VerifyOTP() {
       navigate('/');
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Failed to verify OTP. Please try again.');
-      toast.error(err.message || 'Failed to verify OTP.');
+      let errorMsg = err.message || 'Failed to verify OTP. Please try again.';
+      if (err.code === 'auth/invalid-credential') {
+        errorMsg = 'Invalid account credentials. Please try logging in directly.';
+      } else if (err.message.includes('Firebase:')) {
+        errorMsg = err.message.replace(/Firebase:\s*(.*?)\s*\(auth.*\)./, '$1');
+      }
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally { setLoading(false); }
   };
 
