@@ -132,12 +132,12 @@ export default function VerifyOTP() {
       await setDoc(doc(db, 'users', user.uid), {
         firstName: pendingData.firstName, lastName: pendingData.lastName, phone: pendingData.phone,
         email: pendingData.email, isAdmin: false, isEmailVerified: true, createdAt: new Date().toISOString()
-      });
+      }, { merge: true });
       sessionStorage.removeItem('pendingRegistration');
       sessionStorage.removeItem('registrationOTP');
       sessionStorage.removeItem('otpExpiresAt');
       toast.success('Account successfully created and verified!');
-      navigate('/');
+      window.location.href = '/';
     } catch (err) {
       console.error(err);
       let errorMsg = err.message || 'Failed to verify OTP. Please try again.';
