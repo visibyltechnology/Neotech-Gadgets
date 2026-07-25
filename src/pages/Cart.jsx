@@ -206,10 +206,7 @@ export default function Cart() {
     setLoading(true);
     setKlumpOpen(true);
     setError('');
-    const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
-    const shippingFee = deliveryDetails.price || 0;
-    // Klump validates: amount + shipping_fee === sum(unit_price * quantity)
-    // So amount must be the exact full-price subtotal of cart items
+    const shippingFee = 0; // Delivery is free
     const klumpItems = items.map(i => ({
       image_url: i.img || i.image || '',
       item_url: `${window.location.origin}/products/${i.id}`,
@@ -218,7 +215,7 @@ export default function Cart() {
       quantity: i.quantity,
     }));
     const klumpSubtotal = klumpItems.reduce((acc, i) => acc + i.unit_price * i.quantity, 0);
-    const klumpGrandTotal = klumpSubtotal + shippingFee;
+    const klumpGrandTotal = klumpSubtotal;
     try {
       await loadKlumpScript();
       const KlumpCtor = getKlump();
@@ -267,7 +264,7 @@ export default function Cart() {
     setLoading(true);
     setError('');
     const isKlump = !!klumpRef;
-    const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0 };
+    const deliveryDetails = { price: 0, duration: '' }; // Delivery is free
 
     try {
       // Validate & refresh prices
@@ -298,7 +295,7 @@ export default function Cart() {
         const baseRate = INTEREST_RATES_DECIMAL[i.installments] ?? 0.2;
         const rate = baseRate * (i.paymentFrequency === 'weekly' ? 0.5 : 1);
         return acc + (i.price * (1 + rate)) * i.quantity;
-      }, 0) + deliveryDetails.price;
+      }, 0);
 
       for (const item of items) {
         try { await decreaseInventory(item.id, Number(item.quantity)); }
@@ -309,9 +306,9 @@ export default function Cart() {
         userId: user.uid,
         items,
         deliveryInfo,
-        deliveryFee: deliveryDetails.price,
+        deliveryFee: 0,
         totalAmount: orderTotalAmount,
-        amountPaid: isKlump ? Math.ceil(totalToPayNow + deliveryDetails.price) : (isAdminCash ? orderTotalAmount : 0),
+        amountPaid: isKlump ? Math.ceil(totalToPayNow) : (isAdminCash ? orderTotalAmount : 0),
         status: isKlump ? 'Processing' : (isAdminCash ? 'Completed' : 'Pending Verification'),
         paymentMethod: isKlump ? 'klump_bnpl' : (isAdminCash ? 'admin_cash' : 'bank_transfer'),
         paymentRef: klumpRef || (isAdminCash ? `CASH-${Date.now()}` : `BT-${Date.now()}`),
@@ -322,9 +319,9 @@ export default function Cart() {
       try {
         await createOrderPlacedNotification(user.uid, orderRef.id, items.length);
         const payFreq = items.find(i => i.paymentFrequency)?.paymentFrequency;
-        await createPaymentSuccessNotification(user.uid, orderRef.id, totalToPayNow + deliveryDetails.price, {
+        await createPaymentSuccessNotification(user.uid, orderRef.id, totalToPayNow, {
           itemCount: items.length,
-          remainingBalance: orderTotalAmount - (totalToPayNow + deliveryDetails.price),
+          remainingBalance: orderTotalAmount - totalToPayNow,
           paymentFrequency: payFreq,
         });
       } catch (e) { console.error('Notification error:', e); }
@@ -538,8 +535,6 @@ export default function Cart() {
               <h2 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D42B2B', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #2A2A30', marginTop: '2rem' }}>Order Summary</h2>
               
               {(() => {
-                const deliveryDetails = deliveryInfo.state ? getDeliveryDetails(deliveryInfo.state) : { price: 0, duration: '' };
-                const totalWithDelivery = totalToPayNow + deliveryDetails.price;
                 return (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
@@ -547,14 +542,12 @@ export default function Cart() {
                       <span style={{ color: '#E8E8F0', fontWeight: 800 }}>{fmt(totalToPayNow)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 20 }}>
-                      <span>Delivery {deliveryInfo.state ? `(${deliveryDetails.duration})` : '(Select state)'}</span>
-                      <span style={{ color: deliveryDetails.price > 0 ? '#FF7070' : '#505060', fontWeight: 800 }}>
-                        {deliveryDetails.price > 0 ? fmt(deliveryDetails.price) : 'TBD'}
-                      </span>
+                      <span>Delivery</span>
+                      <span style={{ color: '#4ade80', fontWeight: 800 }}>FREE</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid #2A2A30', paddingTop: 16, marginBottom: 24, background: '#161618', padding: '1rem', borderRadius: 12, border: '1px solid #2A2A30' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#C8C8D4', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Total Due Today</span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#D42B2B', letterSpacing: '0.02em', fontFamily: 'Rajdhani, sans-serif' }}>{fmt(deliveryDetails.price > 0 ? totalWithDelivery : totalToPayNow)}</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#D42B2B', letterSpacing: '0.02em', fontFamily: 'Rajdhani, sans-serif' }}>{fmt(totalToPayNow)}</span>
                     </div>
                   </>
                 );
