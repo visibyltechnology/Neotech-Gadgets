@@ -128,8 +128,14 @@ export default function Register() {
         setError('Please check your internet connection and try again.');
         toast.error('Check your internet connection.');
       } else {
-        setError(`An error occurred: ${err.message}`);
-        toast.error(`Error: ${err.message}`);
+        let errorMsg = err.message || 'Registration failed. Please try again.';
+        if (err.code === 'auth/email-already-in-use') {
+          errorMsg = 'This email is already registered. Please go to the Login page to sign in.';
+        } else if (err.message && err.message.includes('Firebase:')) {
+          errorMsg = err.message.replace(/Firebase:\s*(.*?)\s*\(auth.*\)./, '$1');
+        }
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } finally {
       setLoading(false);

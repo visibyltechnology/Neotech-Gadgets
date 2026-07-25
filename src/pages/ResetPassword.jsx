@@ -83,7 +83,10 @@ export default function ResetPassword() {
       }
     } catch (err) {
       console.error('Reset Password Error:', err);
-      const errorMessage = err.response?.data?.error || 'Failed to reset password. Ensure the service is running.';
+      let errorMessage = err.response?.data?.error || 'Failed to reset password. Ensure the service is running.';
+      if (typeof errorMessage === 'string' && errorMessage.includes('Firebase:')) {
+        errorMessage = errorMessage.replace(/Firebase:\s*(.*?)\s*\(auth.*\)./, '$1');
+      }
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
