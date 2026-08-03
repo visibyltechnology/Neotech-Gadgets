@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { listenToTradeInDevices } from '../utils/tradeInService';
 import { getPricingRules } from '../utils/pricingConfigService';
@@ -44,6 +44,12 @@ export default function SwapPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [referenceId, setReferenceId] = useState('');
+  
+  // Products for Swap Selection
+  const [storeProducts, setStoreProducts] = useState([]);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedProductName, setSelectedProductName] = useState('');
+  const [productSearch, setProductSearch] = useState('');
 
   // Step 1: Setup
   const [intent, setIntent] = useState(targetProductId ? 'swap' : 'sell'); // 'swap' or 'sell'
@@ -71,12 +77,29 @@ export default function SwapPage() {
       setPricingRules(rules);
     });
 
+    // Fetch store products for Swap target selection
+    if (!targetProductId) {
+      const fetchProducts = async () => {
+        try {
+          const q = query(collection(db, 'products'), where('is_hidden', '==', false));
+          const snap = await getDocs(q);
+          const prods = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setStoreProducts(prods);
+        } catch (err) {
+          console.error("Error fetching products", err);
+        }
+      };
+      fetchProducts();
+    }
+
     return () => unsub();
-  }, []);
+  }, [targetProductId]);
 
   // Initialize devices array when numDevices changes
   useEffect(() => {
     setDevices(Array.from({ length: numDevices }, () => ({
+      deviceType: '',
+      brand: '',
       tradeInDeviceId: '',
       condition: '',
       phoneStorage: '',
@@ -146,6 +169,9 @@ export default function SwapPage() {
   const handleNextStep = () => {
     if (step === 1) {
       if (!intent) return toast.error("Please select Swap or Sell");
+      if (intent === 'swap' && !targetProductId && !selectedProductId) {
+        return toast.error("Please select a target product to swap for");
+      }
       if (numDevices < 1 || numDevices > 5) return toast.error("Invalid number of devices");
       setStep(2);
     } else if (step === 2) {
@@ -160,30 +186,35 @@ export default function SwapPage() {
   };
 
   const calculateTotalEstimate = () => {
-    if (!pricingRules) return { value: 0, manualReview: true };
-    
     let total = 0;
     let manualReview = false;
 
-    for (let i = 0; i < devices.length; i++) {
-      const d = devices[i];
+    for (const d of devices) {
+      if (!d.tradeInDeviceId || !d.condition) continue;
       const catalogDevice = tradeInCatalog.find(c => c.id === d.tradeInDeviceId);
       
-      if (!catalogDevice || !catalogDevice.basePrice || catalogDevice.basePrice <= 0) {
+      if (!catalogDevice) {
         manualReview = true;
         break;
       }
+
+      // Map condition to field name
+      const conditionKey = {
+        'brand_new': 'priceBrandNew',
+        'excellent': 'priceExcellent',
+        'very_good': 'priceVeryGood',
+        'good': 'priceGood',
+        'fair': 'priceFair'
+      }[d.condition];
+
+      const price = catalogDevice[conditionKey] || 0;
       
-      const multiplier = pricingRules[d.condition] || 0;
-      if (multiplier === 0) {
-         manualReview = true;
-         break;
+      if (price <= 0) {
+        manualReview = true;
+        break;
       }
 
-      // Optional logic to further decrease price for cracks/repairs could go here.
-      // For now, we strictly use the condition multiplier configured by admin.
-
-      total += catalogDevice.basePrice * multiplier;
+      total += price;
     }
 
     return { value: total, manualReview };
@@ -208,7 +239,7 @@ export default function SwapPage() {
           receiptUrl = await uploadSwapDocument(receiptFile, user.uid, 'receipt');
         }
       } catch (uploadErr) {
-        toast.error("Failed to upload documents. Please check file sizes.");
+        toast.error(uploadErr.message || "Failed to upload documents.");
         setSubmitting(false);
         return;
       }
@@ -216,12 +247,21 @@ export default function SwapPage() {
       // 2. Prepare devices data
       const devicesPayload = devices.map(d => {
         const catalogDevice = tradeInCatalog.find(c => c.id === d.tradeInDeviceId) || {};
+        const conditionKey = {
+          'brand_new': 'priceBrandNew',
+          'excellent': 'priceExcellent',
+          'very_good': 'priceVeryGood',
+          'good': 'priceGood',
+          'fair': 'priceFair'
+        }[d.condition];
+        const specificPrice = catalogDevice[conditionKey] || 0;
+
         return {
           ...d,
           brand: catalogDevice.brand,
           name: catalogDevice.name,
           deviceType: catalogDevice.deviceType,
-          basePrice: catalogDevice.basePrice
+          specificPrice
         };
       });
 
@@ -236,8 +276,8 @@ export default function SwapPage() {
         phone: contactInfo.phone,
         location: contactInfo.location,
         intent,
-        targetProductId: intent === 'swap' ? targetProductId : null,
-        targetProductName: intent === 'swap' ? targetProductName : null,
+        targetProductId: intent === 'swap' ? (targetProductId || selectedProductId) : null,
+        targetProductName: intent === 'swap' ? (targetProductName || selectedProductName) : null,
         estimatedValue: manualReview ? null : estimatedValue,
         devices: devicesPayload,
         idCardUrl,
@@ -271,22 +311,62 @@ export default function SwapPage() {
         </h3>
         
         <div className="space-y-6">
-          {/* Base Selection */}
-          <div>
-            <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Select Device Model *</label>
-            <select
-              required
-              value={device.tradeInDeviceId}
-              onChange={(e) => updateDeviceField(index, 'tradeInDeviceId', e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-brandRed outline-none transition-all"
-            >
-              <option value="">-- Choose your device --</option>
-              {tradeInCatalog.map(item => (
-                <option key={item.id} value={item.id}>
-                  {item.brand} {item.name}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Category *</label>
+              <select
+                required
+                value={device.deviceType}
+                onChange={(e) => {
+                  updateDeviceField(index, 'deviceType', e.target.value);
+                  updateDeviceField(index, 'brand', '');
+                  updateDeviceField(index, 'tradeInDeviceId', '');
+                }}
+                className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-brandRed outline-none transition-all"
+              >
+                <option value="">-- Device Type --</option>
+                {[...new Set(tradeInCatalog.map(c => c.deviceType))].map(type => (
+                  <option key={type} value={type || 'phone'} className="capitalize">{type || 'phone'}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Brand *</label>
+              <select
+                required
+                disabled={!device.deviceType}
+                value={device.brand}
+                onChange={(e) => {
+                  updateDeviceField(index, 'brand', e.target.value);
+                  updateDeviceField(index, 'tradeInDeviceId', '');
+                }}
+                className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-brandRed outline-none transition-all disabled:opacity-50"
+              >
+                <option value="">-- Brand --</option>
+                {[...new Set(tradeInCatalog.filter(c => (c.deviceType || 'phone') === device.deviceType).map(c => c.brand))].map(brand => (
+                  <option key={brand} value={brand}>{brand}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Model *</label>
+              <select
+                required
+                disabled={!device.brand}
+                value={device.tradeInDeviceId}
+                onChange={(e) => updateDeviceField(index, 'tradeInDeviceId', e.target.value)}
+                className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-brandRed outline-none transition-all disabled:opacity-50"
+              >
+                <option value="">-- Choose Model --</option>
+                {tradeInCatalog
+                  .filter(c => (c.deviceType || 'phone') === device.deviceType && c.brand === device.brand)
+                  .map(item => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div>
@@ -601,6 +681,39 @@ export default function SwapPage() {
                     <div className="bg-brandRed/10 border border-brandRed/20 p-4 rounded-xl text-center">
                       <p className="text-sm text-red-200">You are swapping for:</p>
                       <p className="text-lg font-black text-white uppercase tracking-wide">{targetProductName}</p>
+                    </div>
+                  )}
+
+                  {intent === 'swap' && !targetProductName && (
+                    <div className="bg-gray-900 border border-gray-700 p-6 rounded-2xl">
+                      <label className="block text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest text-center">What do you want to swap for?</label>
+                      <input 
+                        type="text" 
+                        placeholder="Search our store products..." 
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-600 text-white rounded-xl py-3 px-4 focus:border-brandRed outline-none mb-4"
+                      />
+                      <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                        {storeProducts
+                          .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+                          .map(prod => (
+                          <div 
+                            key={prod.id} 
+                            onClick={() => {
+                              setSelectedProductId(prod.id);
+                              setSelectedProductName(prod.name);
+                            }}
+                            className={`cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-colors ${selectedProductId === prod.id ? 'bg-brandRed/10 border-brandRed' : 'bg-gray-800 border-gray-700 hover:border-gray-600'}`}
+                          >
+                            <span className="font-bold text-white text-sm">{prod.name}</span>
+                            <span className="text-brandRed font-bold text-sm">₦{Number(prod.price).toLocaleString()}</span>
+                          </div>
+                        ))}
+                        {storeProducts.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                          <p className="text-center text-gray-500 text-sm py-4">No products found.</p>
+                        )}
+                      </div>
                     </div>
                   )}
 

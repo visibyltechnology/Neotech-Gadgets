@@ -17,7 +17,11 @@ export default function TradeInManager() {
     deviceType: 'phone',
     brand: '',
     name: '',
-    basePrice: ''
+    priceBrandNew: '',
+    priceExcellent: '',
+    priceVeryGood: '',
+    priceGood: '',
+    priceFair: ''
   });
 
   useEffect(() => {
@@ -35,11 +39,15 @@ export default function TradeInManager() {
         deviceType: device.deviceType || 'phone',
         brand: device.brand,
         name: device.name,
-        basePrice: device.basePrice
+        priceBrandNew: device.priceBrandNew || '',
+        priceExcellent: device.priceExcellent || '',
+        priceVeryGood: device.priceVeryGood || '',
+        priceGood: device.priceGood || '',
+        priceFair: device.priceFair || ''
       });
     } else {
       setEditingDevice(null);
-      setFormData({ deviceType: 'phone', brand: '', name: '', basePrice: '' });
+      setFormData({ deviceType: 'phone', brand: '', name: '', priceBrandNew: '', priceExcellent: '', priceVeryGood: '', priceGood: '', priceFair: '' });
     }
     setIsModalOpen(true);
   };
@@ -47,13 +55,13 @@ export default function TradeInManager() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingDevice(null);
-    setFormData({ deviceType: 'phone', brand: '', name: '', basePrice: '' });
+    setFormData({ deviceType: 'phone', brand: '', name: '', priceBrandNew: '', priceExcellent: '', priceVeryGood: '', priceGood: '', priceFair: '' });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.brand.trim() || !formData.name.trim() || !formData.basePrice) {
-      toast.error('Please fill in all fields');
+    if (!formData.brand.trim() || !formData.name.trim() || !formData.priceBrandNew) {
+      toast.error('Brand, name, and Brand New price are required');
       return;
     }
 
@@ -62,7 +70,12 @@ export default function TradeInManager() {
         id: editingDevice?.id,
         brand: formData.brand,
         name: formData.name,
-        basePrice: formData.basePrice
+        deviceType: formData.deviceType,
+        priceBrandNew: formData.priceBrandNew,
+        priceExcellent: formData.priceExcellent,
+        priceVeryGood: formData.priceVeryGood,
+        priceGood: formData.priceGood,
+        priceFair: formData.priceFair
       });
       toast.success(editingDevice ? 'Device updated successfully' : 'Device added successfully');
       handleCloseModal();
@@ -136,7 +149,7 @@ export default function TradeInManager() {
             <tr style={{ background: '#1E1E22', fontSize: '0.75rem', color: '#9898A8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               <th style={{ padding: '1rem 1.5rem', fontWeight: 800 }}>Brand</th>
               <th style={{ padding: '1rem 1.5rem', fontWeight: 800 }}>Model</th>
-              <th style={{ padding: '1rem 1.5rem', fontWeight: 800 }}>Base Quotation Price (₦)</th>
+              <th style={{ padding: '1rem 1.5rem', fontWeight: 800 }}>Price Range (Fair - Brand New)</th>
               <th style={{ padding: '1rem 1.5rem', fontWeight: 800, textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
@@ -155,7 +168,7 @@ export default function TradeInManager() {
                   <td style={{ padding: '1rem 1.5rem', color: '#C8C8D4' }}>{device.name}</td>
                   <td style={{ padding: '1rem 1.5rem', color: '#9898A8', textTransform: 'capitalize' }}>{device.deviceType || 'phone'}</td>
                   <td style={{ padding: '1rem 1.5rem', color: '#10b981', fontWeight: 700 }}>
-                    ₦{Number(device.basePrice).toLocaleString()}
+                    ₦{Number(device.priceFair || 0).toLocaleString()} - ₦{Number(device.priceBrandNew || 0).toLocaleString()}
                   </td>
                   <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                     <button 
@@ -224,16 +237,52 @@ export default function TradeInManager() {
                     required
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#9898A8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Base Quotation Price (₦)</label>
-                  <p style={{ fontSize: '0.7rem', color: '#707080', marginBottom: 8 }}>The estimated value if the device is in flawless condition.</p>
-                  <input 
-                    type="number" 
-                    value={formData.basePrice} 
-                    onChange={e => setFormData({...formData, basePrice: e.target.value})}
-                    style={{ width: '100%', background: '#1E1E22', border: '1px solid #2A2A30', borderRadius: 8, padding: '0.75rem', color: '#fff' }}
-                    required
-                  />
+                </div>
+
+                <div style={{ background: '#1E1E22', padding: '1.25rem', borderRadius: 12, border: '1px solid #2A2A30' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9898A8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Condition Pricing (₦)</label>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const base = Number(formData.priceBrandNew) || 0;
+                        setFormData({
+                          ...formData,
+                          priceExcellent: Math.round(base * 0.9),
+                          priceVeryGood: Math.round(base * 0.8),
+                          priceGood: Math.round(base * 0.65),
+                          priceFair: Math.round(base * 0.45)
+                        });
+                        toast.success('Auto-calculated prices from Brand New');
+                      }}
+                      style={{ background: 'rgba(212, 43, 43, 0.1)', color: '#D42B2B', border: '1px solid rgba(212, 43, 43, 0.2)', padding: '0.25rem 0.75rem', borderRadius: 6, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Auto-Calculate
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#C8C8D4', marginBottom: 4 }}>Brand New</label>
+                      <input type="number" value={formData.priceBrandNew} onChange={e => setFormData({...formData, priceBrandNew: e.target.value})} style={{ width: '100%', background: '#161618', border: '1px solid #2A2A30', borderRadius: 8, padding: '0.5rem', color: '#fff' }} required />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#C8C8D4', marginBottom: 4 }}>Excellent</label>
+                      <input type="number" value={formData.priceExcellent} onChange={e => setFormData({...formData, priceExcellent: e.target.value})} style={{ width: '100%', background: '#161618', border: '1px solid #2A2A30', borderRadius: 8, padding: '0.5rem', color: '#fff' }} required />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#C8C8D4', marginBottom: 4 }}>Very Good</label>
+                      <input type="number" value={formData.priceVeryGood} onChange={e => setFormData({...formData, priceVeryGood: e.target.value})} style={{ width: '100%', background: '#161618', border: '1px solid #2A2A30', borderRadius: 8, padding: '0.5rem', color: '#fff' }} required />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#C8C8D4', marginBottom: 4 }}>Good</label>
+                      <input type="number" value={formData.priceGood} onChange={e => setFormData({...formData, priceGood: e.target.value})} style={{ width: '100%', background: '#161618', border: '1px solid #2A2A30', borderRadius: 8, padding: '0.5rem', color: '#fff' }} required />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#C8C8D4', marginBottom: 4 }}>Fair</label>
+                      <input type="number" value={formData.priceFair} onChange={e => setFormData({...formData, priceFair: e.target.value})} style={{ width: '100%', background: '#161618', border: '1px solid #2A2A30', borderRadius: 8, padding: '0.5rem', color: '#fff' }} required />
+                    </div>
+                  </div>
                 </div>
               </div>
 

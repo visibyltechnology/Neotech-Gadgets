@@ -30,8 +30,8 @@ export const listenToTradeInDevices = (callback) => {
  * Add or update a trade-in device
  */
 export const saveTradeInDevice = async (device) => {
-  if (!device.name || !device.brand || !device.basePrice || !device.deviceType) {
-    throw new Error('Device name, brand, base price, and device type are required');
+  if (!device.name || !device.brand || !device.deviceType) {
+    throw new Error('Device name, brand, and device type are required');
   }
   const id = device.id || generateId(`${device.brand}-${device.name}`);
   const deviceRef = doc(db, 'tradeInDevices', id);
@@ -39,8 +39,12 @@ export const saveTradeInDevice = async (device) => {
     name: device.name.trim(),
     brand: device.brand.trim(),
     deviceType: device.deviceType,
-    basePrice: Number(device.basePrice),
-    updatedAt: new Date()
+    priceBrandNew: Number(device.priceBrandNew) || 0,
+    priceExcellent: Number(device.priceExcellent) || 0,
+    priceVeryGood: Number(device.priceVeryGood) || 0,
+    priceGood: Number(device.priceGood) || 0,
+    priceFair: Number(device.priceFair) || 0,
+    updatedAt: new Date().toISOString()
   }, { merge: true });
 };
 
