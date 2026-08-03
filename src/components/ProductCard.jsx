@@ -57,23 +57,46 @@ export function ProductCard({ product, compact = false, badge = null, tagLabel =
 
                 <div className="p-foot">
                     <div>
-                        {product.pss && product.pss > 0 && Number(product.pss) < Number(product.price) && (
+                        {!product.hasConditionPricing && product.pss && product.pss > 0 && Number(product.pss) < Number(product.price) && (
                             <div className="p-old-price">₦{Number(product.price).toLocaleString()}</div>
                         )}
-                        <div className="p-price">₦{Number(product.pss && product.pss > 0 ? product.pss : product.price).toLocaleString()}</div>
+                        <div className="p-price">
+                            {product.hasConditionPricing ? (
+                                <span style={{ fontSize: '0.85em', color: '#9898A8' }}>From </span>
+                            ) : null}
+                            ₦{Number(
+                                product.hasConditionPricing
+                                    ? Math.min(Number(product.priceBrandNew || 0), Number(product.priceUkUsed || 0))
+                                    : (product.pss && product.pss > 0 ? product.pss : product.price)
+                            ).toLocaleString()}
+                        </div>
                     </div>
                     
-                    <button 
-                        className="p-cart-btn" 
-                        aria-label="Add to cart"
-                        disabled={!inStock}
-                        onClick={e => { 
-                            e.stopPropagation(); 
-                            if(inStock && onClick) onClick(); 
-                        }}
-                    >
-                        <i className={`fa-solid ${inStock ? 'fa-plus' : 'fa-xmark'}`}></i>
-                    </button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <button 
+                            className="p-cart-btn" 
+                            style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderColor: 'transparent' }}
+                            aria-label="Swap for this"
+                            title="Swap your old device for this"
+                            onClick={e => { 
+                                e.stopPropagation(); 
+                                window.location.href = `/swap?targetProductId=${product.id}`; 
+                            }}
+                        >
+                            <i className="fa-solid fa-rotate"></i>
+                        </button>
+                        <button 
+                            className="p-cart-btn" 
+                            aria-label="Add to cart"
+                            disabled={!inStock}
+                            onClick={e => { 
+                                e.stopPropagation(); 
+                                if(inStock && onClick) onClick(); 
+                            }}
+                        >
+                            <i className={`fa-solid ${inStock ? 'fa-plus' : 'fa-xmark'}`}></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </article>

@@ -5,6 +5,8 @@ import { db } from '../firebase';
 import Footer from '../components/Footer';
 import { listenToCategories, DEFAULT_CATEGORIES } from '../utils/categoryService';
 import { listenToBrands, DEFAULT_BRANDS } from '../utils/brandService';
+import { listenToAllSubcategories } from '../utils/subcategoryService';
+import { listenToSpecifications } from '../utils/specificationService';
 import { ProductCard, SkeletonCard } from '../components/ProductCard';
 
 function pathToCategory(pathname) {
@@ -55,6 +57,12 @@ export default function Shop() {
 
     const [activeCategories, setActiveCategories] = useState([]);
     const [activeBrands, setActiveBrands] = useState([]);
+    const [activeSubcategories, setActiveSubcategories] = useState([]);
+    const [activeSpecifications, setActiveSpecifications] = useState({});
+    
+    const [allSubcategories, setAllSubcategories] = useState([]);
+    const [allSpecifications, setAllSpecifications] = useState([]);
+
     const [search, setSearch] = useState(searchParams.get('search') || '');
     const [currentPage, setCurrentPage] = useState(1);
     const [products, setProducts] = useState([]);
@@ -73,6 +81,12 @@ export default function Shop() {
             setBrands(brandList.length > 0 ? brandList : DEFAULT_BRANDS);
         });
         return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        const unsubSub = listenToAllSubcategories(setAllSubcategories);
+        const unsubSpec = listenToSpecifications(setAllSpecifications);
+        return () => { unsubSub(); unsubSpec(); };
     }, []);
 
     const ensureInventoryFields = (product) => ({
@@ -127,18 +141,30 @@ export default function Shop() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, activeCategories, activeBrands]);
+    }, [search, activeCategories, activeBrands, activeSubcategories, activeSpecifications]);
 
     const filtered = products.filter(p => {
         const matchCat = activeCategories.length === 0 || activeCategories.includes(p.category);
+        const matchSubcat = activeSubcategories.length === 0 || activeSubcategories.includes(p.subcategory);
         const normalizedBrand = normalizeBrand(p.brand);
         const matchBrand = activeBrands.length === 0 || activeBrands.includes(normalizedBrand);
+        
+        let matchSpecs = true;
+        for (const [specName, activeValues] of Object.entries(activeSpecifications)) {
+            if (activeValues.length > 0) {
+                const productSpecVal = (p.specifications || {})[specName];
+                if (!productSpecVal || !activeValues.includes(productSpecVal)) {
+                    matchSpecs = false;
+                    break;
+                }
+            }
+        }
         
         const searchTerms = search.toLowerCase().trim().split(/\s+/).filter(Boolean);
         const searchableText = `${p.name || ''} ${normalizedBrand} ${p.category || ''} ${p.tag || ''} ${p.description || ''}`.toLowerCase();
         const matchSearch = searchTerms.length === 0 || searchTerms.every(term => searchableText.includes(term));
         
-        return matchCat && matchBrand && matchSearch;
+        return matchCat && matchSubcat && matchBrand && matchSpecs && matchSearch;
     });
 
     const sorted = [...filtered].sort((a, b) => {
@@ -251,6 +277,43 @@ export default function Shop() {
                             ))}
                         </div>
 
+                        {/* Subcategories (Dynamic) */}
+                        {(() => {
+                            const visibleSubcats = allSubcategories.filter(s => {
+                                const catName = categories.find(c => c.id === s.categoryId || c.name === s.categoryId)?.name;
+                                return activeCategories.length === 0 || activeCategories.includes(catName);
+                            });
+                            
+                            if (visibleSubcats.length === 0) return null;
+                            
+                            return (
+                                <>
+                                    <div style={{ padding: '1rem', borderTop: '1px solid #2A2A30', borderBottom: '1px solid #2A2A30', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 800, fontSize: '0.8rem', color: '#E8E8F0', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                                            Subcategories
+                                        </span>
+                                    </div>
+                                    <div style={{ padding: '0.75rem', maxHeight: 240, overflowY: 'auto' }}>
+                                        {visibleSubcats.map(subcat => (
+                                            <label key={subcat.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.6rem 0.5rem', cursor: 'pointer', borderRadius: 8, transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#1E1E22'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                <input 
+                                                    type="checkbox" style={{ display: 'none' }}
+                                                    checked={activeSubcategories.includes(subcat.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setActiveSubcategories(prev => [...prev, subcat.id]);
+                                                        else setActiveSubcategories(prev => prev.filter(s => s !== subcat.id));
+                                                        setCurrentPage(1);
+                                                    }}
+                                                />
+                                                <CustomCheckbox checked={activeSubcategories.includes(subcat.id)} />
+                                                <span style={{ fontSize: '0.85rem', color: activeSubcategories.includes(subcat.id) ? '#C8C8D4' : '#707080', fontWeight: 500 }}>{subcat.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </>
+                            );
+                        })()}
+
                         {/* Brands */}
                         <div style={{ padding: '1rem', borderTop: '1px solid #2A2A30', borderBottom: '1px solid #2A2A30', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 800, fontSize: '0.8rem', color: '#E8E8F0', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
@@ -288,6 +351,57 @@ export default function Shop() {
                                 </label>
                             ))}
                         </div>
+
+                        {/* Dynamic Specifications */}
+                        {(() => {
+                            const visibleSpecs = allSpecifications.filter(spec => {
+                                if (!spec.categoryId && !spec.subcategoryId && !spec.brandId) return true;
+                                if (spec.categoryId) {
+                                    const catName = categories.find(c => c.id === spec.categoryId || c.name === spec.categoryId)?.name;
+                                    if (activeCategories.length > 0 && !activeCategories.includes(catName)) return false;
+                                }
+                                if (spec.subcategoryId && activeSubcategories.length > 0 && !activeSubcategories.includes(spec.subcategoryId)) return false;
+                                if (spec.brandId) {
+                                    const brandName = brands.find(b => b.id === spec.brandId || b.name === spec.brandId)?.name;
+                                    if (activeBrands.length > 0 && !activeBrands.includes(brandName)) return false;
+                                }
+                                return true;
+                            });
+                            
+                            return visibleSpecs.map(spec => (
+                                <div key={spec.id}>
+                                    <div style={{ padding: '1rem', borderTop: '1px solid #2A2A30', borderBottom: '1px solid #2A2A30', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 800, fontSize: '0.8rem', color: '#E8E8F0', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                                            {spec.name}
+                                        </span>
+                                    </div>
+                                    <div style={{ padding: '0.75rem', maxHeight: 240, overflowY: 'auto' }}>
+                                        {spec.options.map(opt => {
+                                            const isChecked = (activeSpecifications[spec.name] || []).includes(opt);
+                                            return (
+                                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.6rem 0.5rem', cursor: 'pointer', borderRadius: 8, transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#1E1E22'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                <input 
+                                                    type="checkbox" style={{ display: 'none' }}
+                                                    checked={isChecked}
+                                                    onChange={(e) => {
+                                                        setActiveSpecifications(prev => {
+                                                            const currentList = prev[spec.name] || [];
+                                                            const newList = e.target.checked 
+                                                                ? [...currentList, opt]
+                                                                : currentList.filter(o => o !== opt);
+                                                            return { ...prev, [spec.name]: newList };
+                                                        });
+                                                        setCurrentPage(1);
+                                                    }}
+                                                />
+                                                <CustomCheckbox checked={isChecked} />
+                                                <span style={{ fontSize: '0.85rem', color: isChecked ? '#C8C8D4' : '#707080', fontWeight: 500 }}>{opt}</span>
+                                            </label>
+                                        )})}
+                                    </div>
+                                </div>
+                            ));
+                        })()}
                     </div>
                 </div>
 
@@ -324,7 +438,7 @@ export default function Shop() {
                             <h3 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '1.5rem', fontWeight: 800, color: '#E8E8F0', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>No products found</h3>
                             <p style={{ color: '#707080', fontSize: '0.85rem', maxWidth: 320, margin: '0 auto 2rem' }}>We couldn't find any items matching your criteria. Try adjusting your filters or search terms.</p>
                             <button 
-                                onClick={() => { setSearch(''); setActiveCategories([]); setActiveBrands([]); }}
+                                onClick={() => { setSearch(''); setActiveCategories([]); setActiveBrands([]); setActiveSubcategories([]); setActiveSpecifications({}); }}
                                 style={{ background: 'linear-gradient(135deg,#D42B2B,#A01E1E)', color: '#fff', border: 'none', borderRadius: 10, padding: '0.85rem 2rem', fontSize: '0.75rem', fontWeight: 700, fontFamily: 'Rajdhani, sans-serif', letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}
                             >
                                 Clear Filters

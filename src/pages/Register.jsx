@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
+import { fetchSignInMethodsForEmail, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import Footer from '../components/Footer';
 import LegalModal from '../components/LegalModal';
 import { Eye, EyeOff, CheckCircle, UserPlus } from 'lucide-react';
@@ -93,32 +93,59 @@ export default function Register() {
 
     setLoading(true);
     try {
+      // --- Reliable email existence check (runs BEFORE sending OTP) ---
+      // Step 1: Try fetchSignInMethodsForEmail (works for all providers)
+      let emailExists = false;
       try {
         const methods = await fetchSignInMethodsForEmail(auth, formData.email);
-        if (methods && methods.length > 0) {
-          setError('This email is already registered. Please login instead.');
-          toast.error('This email is already registered.');
-          setLoading(false);
-          return;
+        if (methods && methods.length > 0) emailExists = true;
+      } catch (_) { /* deprecated API may fail silently, fall through to probe */ }
+
+      // Step 2: Probe method as backup (catches email/password accounts reliably)
+      if (!emailExists) {
+        try {
+          const probe = await createUserWithEmailAndPassword(auth, formData.email, '__PROBE_' + Date.now());
+          // Email was free — delete the probe account
+          await deleteUser(probe.user);
+        } catch (probeErr) {
+          if (
+            probeErr.code === 'auth/email-already-in-use' ||
+            probeErr.code === 'auth/account-exists-with-different-credential'
+          ) {
+            emailExists = true;
+          }
+          // Other probe errors (e.g., network) are ignored — let registration continue
         }
-      } catch (checkErr) { /* ignored */ }
+      }
+
+      if (emailExists) {
+        setError('This email is already registered. Please login or reset your password.');
+        toast.error('This email is already registered. Please log in.');
+        setLoading(false);
+        return;
+      }
 
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+      // Store OTP data FIRST before sending email to avoid race condition
+      sessionStorage.setItem('pendingRegistration', JSON.stringify(formData));
+      sessionStorage.setItem('registrationOTP', otpCode);
+      sessionStorage.setItem('otpExpiresAt', otpExpiresAt);
 
       try {
         await sendRegistrationOTPEmail(formData.email, formData.firstName, otpCode);
         toast.success('OTP sent! Check your email inbox (and spam folder).');
       } catch (emailErr) {
         console.error("EmailJS error:", emailErr);
+        // Clear stored OTP on email failure
+        sessionStorage.removeItem('pendingRegistration');
+        sessionStorage.removeItem('registrationOTP');
+        sessionStorage.removeItem('otpExpiresAt');
         toast.error('Failed to send verification email. Please check your email address and try again.');
         setLoading(false);
         return;
       }
-
-      sessionStorage.setItem('pendingRegistration', JSON.stringify(formData));
-      sessionStorage.setItem('registrationOTP', otpCode);
-      sessionStorage.setItem('otpExpiresAt', otpExpiresAt);
 
       setSuccessMessage('Verification email sent!');
       navigate(`/verify-otp?email=${encodeURIComponent(formData.email)}`);

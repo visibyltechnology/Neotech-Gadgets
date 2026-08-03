@@ -173,12 +173,12 @@ export default function Login() {
                     <label style={{ fontSize: '0.65rem', fontWeight: 700, fontFamily: 'Rajdhani, sans-serif', color: '#9898A8', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
                       Password
                     </label>
-                    <a href="#" style={{ fontSize: '0.75rem', color: '#D42B2B', fontWeight: 600, textDecoration: 'none', transition: 'color 0.2s' }}
+                    <Link to="/forgot-password" style={{ fontSize: '0.75rem', color: '#D42B2B', fontWeight: 600, textDecoration: 'none', transition: 'color 0.2s' }}
                       onMouseEnter={e => e.currentTarget.style.color = '#FF3030'}
                       onMouseLeave={e => e.currentTarget.style.color = '#D42B2B'}
                     >
                       Forgot Password?
-                    </a>
+                    </Link>
                   </div>
                   <div style={{ position: 'relative' }}>
                     <i className="fas fa-lock" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#505060', fontSize: '0.8rem' }}></i>

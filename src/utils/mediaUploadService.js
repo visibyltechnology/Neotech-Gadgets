@@ -1,22 +1,11 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../firebase';
-
 /**
  * Media Upload Service
- * Handles image uploads to Firebase Storage for carousel, products, etc.
+ * Handles image uploads to Cloudinary for carousel, products, etc.
  */
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const CAROUSEL_FOLDER = 'carousel';
-const PRODUCT_FOLDER = 'products';
-const PROOF_OF_DELIVERY_FOLDER = 'proof_of_delivery';
 
-/**
- * Validate image file
- * @param {File} file - File to validate
- * @returns {Object} { valid: boolean, error: string }
- */
 export const validateImageFile = (file) => {
   if (!file) {
     return { valid: false, error: 'No file provided' };
@@ -33,175 +22,72 @@ export const validateImageFile = (file) => {
   return { valid: true };
 };
 
-/**
- * Upload carousel image
- * @param {File} file - Image file to upload
- * @param {string} name - Name/identifier for the image
- * @returns {Promise<string>} Download URL of uploaded image
- */
+const uploadToCloudinary = async (file, folderName) => {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+  if (!cloudName || !uploadPreset || cloudName === 'your_cloud_name') {
+    throw new Error("Cloudinary configuration missing. Please add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET to .env file.");
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+  formData.append('folder', folderName); // Cloudinary folder structure
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'Failed to upload to Cloudinary');
+  }
+  
+  return data.secure_url;
+};
+
 export const uploadCarouselImage = async (file, name) => {
-  try {
-    // Validate file
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      throw new Error(validation.error);
-    }
-
-    // Create unique filename
-    const timestamp = Date.now();
-    const filename = `${CAROUSEL_FOLDER}/${name}_${timestamp}`;
-    const storageRef = ref(storage, filename);
-
-    // Upload file
-    const snapshot = await uploadBytes(storageRef, file, {
-      contentType: file.type,
-      cacheControl: 'public, max-age=31536000' // 1 year cache
-    });
-
-    // Get download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error('Error uploading carousel image:', error);
-    throw new Error(`Failed to upload carousel image: ${error.message}`);
-  }
+  const validation = validateImageFile(file);
+  if (!validation.valid) throw new Error(validation.error);
+  return await uploadToCloudinary(file, 'carousel');
 };
 
-/**
- * Upload product image
- * @param {File} file - Image file to upload
- * @param {string} productId - Product ID
- * @param {number} index - Image index (for multiple images per product)
- * @returns {Promise<string>} Download URL
- */
 export const uploadProductImage = async (file, productId, index = 0) => {
-  try {
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      throw new Error(validation.error);
-    }
-
-    const timestamp = Date.now();
-    const filename = `${PRODUCT_FOLDER}/${productId}_${index}_${timestamp}`;
-    const storageRef = ref(storage, filename);
-
-    const snapshot = await uploadBytes(storageRef, file, {
-      contentType: file.type,
-      cacheControl: 'public, max-age=31536000'
-    });
-
-    return await getDownloadURL(snapshot.ref);
-  } catch (error) {
-    console.error('Error uploading product image:', error);
-    throw new Error(`Failed to upload product image: ${error.message}`);
-  }
+  const validation = validateImageFile(file);
+  if (!validation.valid) throw new Error(validation.error);
+  return await uploadToCloudinary(file, `products/${productId}`);
 };
 
-/**
- * Upload proof of delivery image
- * @param {File} file - Image file to upload
- * @param {string} orderId - Order ID
- * @returns {Promise<string>} Download URL
- */
 export const uploadProofOfDeliveryImage = async (file, orderId) => {
-  try {
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      throw new Error(validation.error);
-    }
-
-    const timestamp = Date.now();
-    const filename = `${PROOF_OF_DELIVERY_FOLDER}/${orderId}_${timestamp}`;
-    const storageRef = ref(storage, filename);
-
-    const snapshot = await uploadBytes(storageRef, file, {
-      contentType: file.type,
-      cacheControl: 'public, max-age=31536000'
-    });
-
-    return await getDownloadURL(snapshot.ref);
-  } catch (error) {
-    console.error('Error uploading proof of delivery:', error);
-    throw new Error(`Failed to upload proof of delivery: ${error.message}`);
-  }
+  const validation = validateImageFile(file);
+  if (!validation.valid) throw new Error(validation.error);
+  return await uploadToCloudinary(file, `proof_of_delivery/${orderId}`);
 };
 
-/**
- * Delete image from storage
- * @param {string} downloadURL - Full download URL of image to delete
- * @returns {Promise<void>}
- */
 export const deleteImage = async (downloadURL) => {
-  try {
-    if (!downloadURL) {
-      throw new Error('No URL provided');
-    }
-
-    // Extract the path from the download URL
-    const parts = downloadURL.split('/');
-    const fileIndex = parts.findIndex(p => p === 'o');
-    if (fileIndex === -1) {
-      throw new Error('Invalid download URL');
-    }
-
-    const filePath = decodeURIComponent(parts[fileIndex + 1].split('?')[0]);
-    const fileRef = ref(storage, filePath);
-
-    await deleteObject(fileRef);
-  } catch (error) {
-    console.error('Error deleting image:', error);
-    throw new Error(`Failed to delete image: ${error.message}`);
-  }
+  // Cloudinary unsigned uploads can't be deleted purely from frontend safely
+  console.warn("Client-side deletion is not supported for unsigned Cloudinary uploads.");
+  return Promise.resolve();
 };
 
-/**
- * Upload image from URL (if external URL provided)
- * Falls back to local upload if needed
- * @param {string} urlOrFile - URL or File object
- * @param {string} folder - Folder to save in
- * @param {string} name - Name/identifier
- * @returns {Promise<string>} Download URL
- */
-export const uploadImageFromURLOrFile = async (urlOrFile, folder = CAROUSEL_FOLDER, name) => {
-  try {
-    // If it's a string (URL), return it as-is (assuming it's already a valid URL)
-    if (typeof urlOrFile === 'string') {
-      // In production, you might want to validate the URL
-      // or cache it by downloading and re-uploading
-      return urlOrFile;
-    }
-
-    // If it's a File object, upload it
-    if (urlOrFile instanceof File) {
-      const timestamp = Date.now();
-      const filename = `${folder}/${name || 'image'}_${timestamp}`;
-      const storageRef = ref(storage, filename);
-
-      const snapshot = await uploadBytes(storageRef, urlOrFile, {
-        contentType: urlOrFile.type,
-        cacheControl: 'public, max-age=31536000'
-      });
-
-      return await getDownloadURL(snapshot.ref);
-    }
-
-    throw new Error('Invalid input: must be URL string or File object');
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    throw error;
+export const uploadImageFromURLOrFile = async (urlOrFile, folder = 'carousel', name) => {
+  if (typeof urlOrFile === 'string') return urlOrFile;
+  if (urlOrFile instanceof File) {
+    return await uploadToCloudinary(urlOrFile, folder);
   }
+  throw new Error('Invalid input: must be URL string or File object');
 };
 
-/**
- * Compress image before upload (for optimization)
- * Note: This is a basic implementation. In production, use imagemin or similar
- * @param {File} file - File to compress
- * @returns {Promise<File>} Compressed file
- */
 export const compressImage = async (file) => {
-  // For now, just return the file as-is
-  // In production, use a library like imagemin or image-js
   return file;
+};
+
+export const uploadSwapDocument = async (file, userId, docType) => {
+  const validation = validateImageFile(file);
+  if (!validation.valid) throw new Error(validation.error);
+  return await uploadToCloudinary(file, `swap_documents/${userId}`);
 };
 
 export default {
@@ -212,6 +98,7 @@ export default {
   uploadImageFromURLOrFile,
   validateImageFile,
   compressImage,
+  uploadSwapDocument,
   MAX_FILE_SIZE,
   ALLOWED_IMAGE_TYPES
 };

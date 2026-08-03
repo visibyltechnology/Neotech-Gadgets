@@ -414,6 +414,9 @@ export default function Cart() {
                       <h3 style={{ fontWeight: 800, color: '#E8E8F0', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, fontFamily: 'Rajdhani, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {item.name}
                       </h3>
+                      {item.selectedCondition && (
+                        <p style={{ fontSize: '0.65rem', fontWeight: 800, color: '#D42B2B', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 2 }}>Condition: {item.selectedCondition}</p>
+                      )}
                       <p style={{ fontSize: '0.65rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Length: {item.length}</p>
                     </div>
                     <button 
@@ -745,8 +748,11 @@ export default function Cart() {
                   {items.map(item => (
                     <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#1E1E22', border: '1px solid #2A2A30', borderRadius: 8 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#707080' }}>{item.quantity}Ã—</span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#E8E8F0' }}>{item.name}</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#707080' }}>{item.quantity}×</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#E8E8F0' }}>{item.name}</span>
+                          {item.selectedCondition && <span style={{ fontSize: '0.6rem', color: '#D42B2B', fontWeight: 800, textTransform: 'uppercase' }}>{item.selectedCondition}</span>}
+                        </div>
                       </div>
                       <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#C8C8D4', fontFamily: 'Rajdhani, sans-serif' }}>
                         {fmt(item.paymentChoice === 'full' ? item.price * item.quantity : (item.periodPayment || 0) * item.quantity)}

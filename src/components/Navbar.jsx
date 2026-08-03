@@ -99,6 +99,7 @@ export default function Navbar() {
                         <li><Link to="/products?cat=Tablets" className={location.search.includes('Tablets') ? 'active' : ''}>Tablets</Link></li>
                         <li><Link to="/products?cat=iPhone" className={location.search.includes('iPhone') ? 'active' : ''}>iPhone</Link></li>
                         <li><Link to="/products" className={isActive('/products') && !location.search ? 'active' : ''}>Shop All</Link></li>
+                        <li><Link to="/swap" className={isActive('/swap') ? 'active' : ''} style={{ color: isActive('/swap') ? '#D42B2B' : undefined }}>Swap</Link></li>
                     </ul>
 
                     {/* Right Actions */}
@@ -182,6 +183,9 @@ export default function Navbar() {
                             </Link>
                             <Link to="/products" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${isActive('/products') && !location.search ? 'bg-[#1E1E28] text-[#fff] border border-[#D42B2B]' : 'text-gray-300 hover:text-white hover:bg-[#161618]'}`}>
                                 <i className="fas fa-mobile-screen w-5 text-center text-[#D42B2B]"></i> Shop All Gadgets
+                            </Link>
+                            <Link to="/swap" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${isActive('/swap') ? 'bg-[#1E1E28] text-[#fff] border border-[#D42B2B]' : 'text-gray-300 hover:text-white hover:bg-[#161618]'}`}>
+                                <i className="fas fa-arrows-rotate w-5 text-center text-[#D42B2B]"></i> Swap Device
                             </Link>
                         </div>
 

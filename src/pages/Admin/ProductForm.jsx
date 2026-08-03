@@ -4,11 +4,13 @@ import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } fro
 import { db } from '../../firebase';
 import {
   ArrowLeft, Save, Image as ImageIcon, AlertCircle,
-  Tag, Ruler, DollarSign, Star, Upload, X, CheckCircle2, Sparkles, Infinity
+  Tag, Ruler, DollarSign, Star, Upload, X, CheckCircle2, Sparkles, Infinity, Sliders
 } from 'lucide-react';
 import { uploadImage } from '../../utils/uploadImage';
 import { listenToCategories, DEFAULT_CATEGORIES, CATEGORY_STYLES } from '../../utils/categoryService';
 import { listenToBrands, DEFAULT_BRANDS } from '../../utils/brandService';
+import { listenToAllSubcategories } from '../../utils/subcategoryService';
+import { listenToSpecifications } from '../../utils/specificationService';
 import toast from 'react-hot-toast';
 
 
@@ -35,9 +37,18 @@ export default function ProductForm() {
     items_left: 0,
     unlimited_stock: false,
     inventory_status: 'in_stock',
-    is_hidden: false
+    unlimited_stock: false,
+    inventory_status: 'in_stock',
+    is_hidden: false,
+    subcategory: '',
+    specifications: {},
+    hasConditionPricing: false,
+    priceBrandNew: '',
+    priceUkUsed: ''
   });
   const [categories, setCategories] = useState([]);
+  const [allSubcategories, setAllSubcategories] = useState([]);
+  const [allSpecifications, setAllSpecifications] = useState([]);
   const [brands, setBrands] = useState([]);
   const [productImages, setProductImages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -67,6 +78,13 @@ export default function ProductForm() {
       setBrands(brandList.length > 0 ? brandList : DEFAULT_BRANDS);
     });
     return () => unsub();
+  }, []);
+
+  // Load subcategories and specifications
+  useEffect(() => {
+    const unsubSub = listenToAllSubcategories(setAllSubcategories);
+    const unsubSpec = listenToSpecifications(setAllSpecifications);
+    return () => { unsubSub(); unsubSpec(); };
   }, []);
 
   useEffect(() => {
@@ -114,7 +132,21 @@ export default function ProductForm() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: type === 'checkbox' ? checked : value };
+      if (name === 'category') updated.subcategory = '';
+      return updated;
+    });
+  };
+
+  const handleSpecChange = (specName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: {
+        ...(prev.specifications || {}),
+        [specName]: value
+      }
+    }));
   };
 
   const processFiles = (files) => {
@@ -173,7 +205,10 @@ export default function ProductForm() {
 
       const payload = {
         ...formData,
-        price: Number(formData.price),
+        price: Number(formData.price || 0),
+        hasConditionPricing: Boolean(formData.hasConditionPricing),
+        priceBrandNew: Number(formData.priceBrandNew || 0),
+        priceUkUsed: Number(formData.priceUkUsed || 0),
         pss: Number(formData.pss || 0),
         brand: formData.brand || '',
         description: formData.description || '',
@@ -186,6 +221,8 @@ export default function ProductForm() {
         unlimited_stock: formData.unlimited_stock || false,
         inventory_status: formData.unlimited_stock ? 'in_stock' : (Number(formData.items_left || 0) === 0 ? 'out_of_stock' : (formData.inventory_status || 'in_stock')),
         is_hidden: Boolean(formData.is_hidden),
+        subcategory: formData.subcategory || '',
+        specifications: formData.specifications || {},
         updatedAt: new Date()
       };
 
@@ -369,6 +406,31 @@ export default function ProductForm() {
                 </div>
               </FieldGroup>
 
+              {/* Subcategory */}
+              <FieldGroup label="Subcategory" icon={<Tag size={14} />} accent={catColor.text}>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    name="subcategory" value={formData.subcategory || ''} onChange={handleChange}
+                    style={{
+                      ...inputStyle, paddingLeft: 16, cursor: 'pointer', appearance: 'none',
+                      opacity: !formData.category ? 0.5 : 1
+                    }}
+                    disabled={!formData.category}
+                    onFocus={e => { e.target.style.boxShadow = `0 0 0 3px rgba(107,114,128,0.12)`; }}
+                    onBlur={e => { e.target.style.boxShadow = 'none'; }}
+                  >
+                    <option value="">None</option>
+                    {(() => {
+                      const activeCatId = categories.find(c => c.name === formData.category)?.id || formData.category;
+                      return allSubcategories
+                        .filter(s => s.categoryId === activeCatId)
+                        .map(s => <option key={s.id} value={s.id}>{s.name}</option>);
+                    })()}
+                  </select>
+                  <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }}>▾</div>
+                </div>
+              </FieldGroup>
+
               <FieldGroup label='Model/Specifications' icon={<Ruler size={14} />} accent="#059669">
                 <input
                   type="text" name="length" value={formData.length}
@@ -445,20 +507,113 @@ export default function ProductForm() {
               </FieldGroup>
             </div>
 
-            {/* Prices */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-              <FieldGroup label="Full Price (₦)" icon={<DollarSign size={14} />} accent="#1d4ed8">
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontWeight: 700, fontSize: 14 }}>₦</span>
-                  <input
-                    type="number" name="price" value={formData.price}
-                    onChange={handleChange} required placeholder="150000"
-                    style={{ ...inputStyle, paddingLeft: 34 }}
-                    onFocus={e => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(29,78,216,0.12)'; }}
-                    onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
-                  />
+            {/* Dynamic Specifications based on selections */}
+            {(() => {
+              const activeCatId = categories.find(c => c.name === formData.category)?.id || formData.category;
+              const activeBrandId = brands.find(b => b.name === formData.brand)?.id || formData.brand;
+              
+              const relevantSpecs = allSpecifications.filter(spec => {
+                if (!spec.categoryId && !spec.subcategoryId && !spec.brandId) return true;
+                if (spec.categoryId && spec.categoryId !== activeCatId) return false;
+                if (spec.subcategoryId && spec.subcategoryId !== formData.subcategory) return false;
+                if (spec.brandId && spec.brandId !== activeBrandId) return false;
+                return true;
+              });
+
+              if (relevantSpecs.length === 0) return null;
+
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  {relevantSpecs.map(spec => (
+                    <FieldGroup key={spec.id} label={spec.name} icon={<Sliders size={14} />} accent="#3b82f6">
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          value={(formData.specifications || {})[spec.name] || ''}
+                          onChange={e => handleSpecChange(spec.name, e.target.value)}
+                          style={{
+                            ...inputStyle, paddingLeft: 16, cursor: 'pointer', appearance: 'none'
+                          }}
+                          onFocus={e => { e.target.style.boxShadow = `0 0 0 3px rgba(59,130,246,0.12)`; }}
+                          onBlur={e => { e.target.style.boxShadow = 'none'; }}
+                        >
+                          <option value="">-- Select {spec.name} --</option>
+                          {spec.options.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                        <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }}>▾</div>
+                      </div>
+                    </FieldGroup>
+                  ))}
                 </div>
-              </FieldGroup>
+              );
+            })()}
+
+            {/* Prices */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <h4 style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.875rem' }}>Condition Pricing</h4>
+                  <p style={{ color: '#64748b', fontSize: '0.75rem', marginTop: 2 }}>Enable separate prices for Brand New and UK Used conditions.</p>
+                </div>
+                <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    name="hasConditionPricing"
+                    checked={formData.hasConditionPricing}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hasConditionPricing: e.target.checked }))}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brandRed"></div>
+                </label>
+              </div>
+
+              {formData.hasConditionPricing ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  <FieldGroup label="Brand New Price (₦)" icon={<DollarSign size={14} />} accent="#1d4ed8">
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontWeight: 700, fontSize: 14 }}>₦</span>
+                      <input
+                        type="number" name="priceBrandNew" value={formData.priceBrandNew}
+                        onChange={handleChange} required placeholder="150000"
+                        style={{ ...inputStyle, paddingLeft: 34 }}
+                        onFocus={e => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(29,78,216,0.12)'; }}
+                        onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                      />
+                    </div>
+                  </FieldGroup>
+                  <FieldGroup label="UK Used Price (₦)" icon={<DollarSign size={14} />} accent="#f59e0b">
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontWeight: 700, fontSize: 14 }}>₦</span>
+                      <input
+                        type="number" name="priceUkUsed" value={formData.priceUkUsed}
+                        onChange={handleChange} required placeholder="120000"
+                        style={{ ...inputStyle, paddingLeft: 34 }}
+                        onFocus={e => { e.target.style.borderColor = '#f59e0b'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.12)'; }}
+                        onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                      />
+                    </div>
+                  </FieldGroup>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  <FieldGroup label="Full Price (₦)" icon={<DollarSign size={14} />} accent="#1d4ed8">
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontWeight: 700, fontSize: 14 }}>₦</span>
+                      <input
+                        type="number" name="price" value={formData.price}
+                        onChange={handleChange} required placeholder="150000"
+                        style={{ ...inputStyle, paddingLeft: 34 }}
+                        onFocus={e => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(29,78,216,0.12)'; }}
+                        onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                      />
+                    </div>
+                  </FieldGroup>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
 
               <FieldGroup label="Sale Price (₦)" icon={<DollarSign size={14} />} accent="#dc2626">
                 <div style={{ position: 'relative' }}>

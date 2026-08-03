@@ -90,18 +90,22 @@ export default function VerifyOTP() {
 
   const verifyOTP = async (e) => {
     e.preventDefault();
-    const enteredCode = otp.join('');
+    const enteredCode = otp.join('').trim();
     if (enteredCode.length !== 6) { setError('Please enter the 6-digit code.'); toast.error('Please enter the 6-digit code.'); return; }
     if (timeLeft === 0) { setError('OTP has expired. Please request a new one.'); toast.error('OTP has expired.'); return; }
 
     setLoading(true);
     setError('');
     try {
-      const storedOTP = sessionStorage.getItem('registrationOTP');
+      const storedOTP = sessionStorage.getItem('registrationOTP')?.trim();
       const dataStr = sessionStorage.getItem('pendingRegistration');
-      if (!storedOTP || !dataStr) throw new Error('Session expired. Please register again.');
+      if (!storedOTP || !dataStr) {
+        toast.error('Session expired. Please register again.');
+        navigate('/register');
+        return;
+      }
       if (enteredCode !== storedOTP) {
-        setError('Invalid OTP code.');
+        setError('Invalid OTP code. Please double-check the code from your email.');
         toast.error('Invalid OTP code.');
         setLoading(false);
         return;
@@ -114,16 +118,15 @@ export default function VerifyOTP() {
         user = userCredential.user;
       } catch (authErr) {
         if (authErr.code === 'auth/email-already-in-use') {
-          try {
-            const { signInWithEmailAndPassword } = await import('firebase/auth');
-            const userCredential = await signInWithEmailAndPassword(auth, pendingData.email, pendingData.password);
-            user = userCredential.user;
-          } catch (signInErr) {
-            if (signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password') {
-              throw new Error('An account with this email already exists, but the password entered during registration does not match. Please go to the Login page to sign in or reset your password.');
-            }
-            throw signInErr;
-          }
+          // The email was registered between the check and OTP verification.
+          // Clean up session and send user back to register with a clear message.
+          sessionStorage.removeItem('pendingRegistration');
+          sessionStorage.removeItem('registrationOTP');
+          sessionStorage.removeItem('otpExpiresAt');
+          setError('This email is already registered. Please go to the Login page to sign in or reset your password.');
+          toast.error('Email already registered. Please log in instead.');
+          setLoading(false);
+          return;
         } else {
           throw authErr;
         }
@@ -143,7 +146,7 @@ export default function VerifyOTP() {
       let errorMsg = err.message || 'Failed to verify OTP. Please try again.';
       if (err.code === 'auth/invalid-credential') {
         errorMsg = 'Invalid account credentials. Please try logging in directly.';
-      } else if (err.message.includes('Firebase:')) {
+      } else if (err.message && err.message.includes('Firebase:')) {
         errorMsg = err.message.replace(/Firebase:\s*(.*?)\s*\(auth.*\)./, '$1');
       }
       setError(errorMsg);

@@ -22,14 +22,19 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 const DeliveryPortal= lazy(() => import('./pages/DeliveryPortal'));
 const Terms          = lazy(() => import('./pages/Terms'));
 const PrivacyPolicy  = lazy(() => import('./pages/PrivacyPolicy'));
+const SwapPage       = lazy(() => import('./pages/Swap'));
 
 const AdminLayout      = lazy(() => import('./pages/Admin/AdminLayout'));
 const ProductManager   = lazy(() => import('./pages/Admin/ProductManager'));
 const CategoryManager  = lazy(() => import('./pages/Admin/CategoryManager'));
 const BrandManager     = lazy(() => import('./pages/Admin/BrandManager'));
+const SubcategoryManager = lazy(() => import('./pages/Admin/SubcategoryManager'));
+const SpecificationManager = lazy(() => import('./pages/Admin/SpecificationManager'));
 const ProductForm      = lazy(() => import('./pages/Admin/ProductForm'));
 const AdminOrders      = lazy(() => import('./pages/Admin/AdminOrders'));
 const AdminUsers       = lazy(() => import('./pages/Admin/AdminUsers'));
+const AdminSwaps       = lazy(() => import('./pages/Admin/AdminSwaps'));
+const TradeInManager   = lazy(() => import('./pages/Admin/TradeInManager'));
 const SiteSettings     = lazy(() => import('./pages/Admin/SiteSettings'));
 
 /* ─── Page-level Suspense mini-loader ─── */
@@ -244,15 +249,20 @@ function App() {
           <Route path="/notifications"  element={user ? <Notifications /> : <Navigate to="/login" />} />
           <Route path="/delivery"       element={<DeliveryPortal />} />
           <Route path="/terms"          element={<Terms />} />
+          <Route path="/swap"           element={<SwapPage />} />
           <Route path="/privacy"        element={<PrivacyPolicy />} />
 
           <Route path="/admin" element={user && isAdmin ? <AdminLayout /> : <Navigate to="/" />}>
             <Route index              element={<ProductManager />} />
             <Route path="categories"  element={<CategoryManager />} />
+            <Route path="subcategories" element={<SubcategoryManager />} />
             <Route path="brands"      element={<BrandManager />} />
+            <Route path="specifications" element={<SpecificationManager />} />
             <Route path="new"         element={<ProductForm />} />
             <Route path="edit/:id"    element={<ProductForm />} />
             <Route path="orders"      element={<AdminOrders />} />
+            <Route path="swaps"       element={<AdminSwaps />} />
+            <Route path="trade-ins"   element={<TradeInManager />} />
             <Route path="users"       element={<AdminUsers />} />
             <Route path="settings"    element={<SiteSettings />} />
           </Route>

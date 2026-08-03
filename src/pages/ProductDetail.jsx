@@ -24,6 +24,7 @@ export default function ProductDetail() {
   const [error, setError] = useState('');
 
   const [selectedImg, setSelectedImg] = useState('');
+  const [selectedCondition, setSelectedCondition] = useState('');
   const [showInstallment, setShowInstallment] = useState(false);
   const [installments, setInstallments] = useState(2);
   const [paymentFrequency, setPaymentFrequency] = useState('monthly');
@@ -44,6 +45,9 @@ export default function ProductDetail() {
           const data = docSnap.data();
           setProduct({ id: docSnap.id, ...data });
           setSelectedImg(data.img || data.images?.[0] || '');
+          if (data.hasConditionPricing) {
+            setSelectedCondition('Brand New');
+          }
         } else {
           setError("Product not found");
         }
@@ -95,7 +99,11 @@ export default function ProductDetail() {
     );
   }
 
-  const price = Number(product.price);
+  const basePrice = product.hasConditionPricing 
+    ? (selectedCondition === 'Brand New' ? Number(product.priceBrandNew) : Number(product.priceUkUsed))
+    : Number(product.price);
+  
+  const price = basePrice;
   const monthlyRate = INTEREST_RATES_PERCENT[installments] / 100;
   const rate        = monthlyRate * (paymentFrequency === 'weekly' ? 0.5 : 1);
   const displayRate = INTEREST_RATES_PERCENT[installments] * (paymentFrequency === 'weekly' ? 0.5 : 1);
@@ -107,13 +115,18 @@ export default function ProductDetail() {
 
   const allImages = product.images && product.images.length > 0 ? product.images : [product.img].filter(Boolean);
 
+  const getProductWithCondition = () => {
+    if (!product.hasConditionPricing) return product;
+    return { ...product, price: basePrice, selectedCondition };
+  };
+
   const handleBuyOnce = () => {
-    addToCart(product, 1, 'full', 1, price);
+    addToCart(getProductWithCondition(), 1, 'full', 1, price);
     navigate('/cart');
   };
 
   const handleInstallment = () => {
-    addToCart(product, 1, 'installment', installments, periodPayment, paymentFrequency);
+    addToCart(getProductWithCondition(), 1, 'installment', installments, periodPayment, paymentFrequency);
     navigate('/cart');
   };
 
@@ -239,6 +252,35 @@ export default function ProductDetail() {
               </div>
             </div>
 
+            {product.hasConditionPricing && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E8E8F0', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Device Condition</p>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {['Brand New', 'UK Used'].map(condition => {
+                    const isSelected = selectedCondition === condition;
+                    return (
+                      <button
+                        key={condition}
+                        onClick={() => setSelectedCondition(condition)}
+                        style={{
+                          flex: 1, padding: '1rem', borderRadius: 12, cursor: 'pointer',
+                          background: isSelected ? 'rgba(212,43,43,0.1)' : '#161618',
+                          border: `2px solid ${isSelected ? '#D42B2B' : '#2A2A30'}`,
+                          color: isSelected ? '#fff' : '#C8C8D4', transition: 'all 0.2s',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                        }}
+                      >
+                        <span style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{condition}</span>
+                        <span style={{ fontSize: '0.75rem', color: isSelected ? '#FF7070' : '#707080', fontWeight: 700 }}>
+                          {fmt(condition === 'Brand New' ? product.priceBrandNew : product.priceUkUsed)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div style={{ borderTop: '1px solid #2A2A30', paddingTop: '1.5rem', marginBottom: '2rem' }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, marginBottom: 8 }}>
                 <span style={{ fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', fontWeight: 800, color: '#E8E8F0', letterSpacing: '0.02em', fontFamily: 'Rajdhani, sans-serif' }}>
@@ -254,7 +296,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: '2rem' }}>
               <button 
                 onClick={handleBuyOnce}
                 style={{
@@ -267,7 +309,21 @@ export default function ProductDetail() {
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(212,43,43,0.45)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(212,43,43,0.3)'; }}
               >
-                <ShoppingBag size={18} /> Buy Once Now — {fmt(product.pss && product.pss > 0 ? product.pss : price)}
+                <ShoppingBag size={18} /> Buy Now
+              </button>
+              <button 
+                onClick={() => navigate(`/swap?targetProductId=${product.id}`)}
+                style={{
+                  width: '100%', background: 'linear-gradient(135deg,#3b82f6,#2563eb)', color: '#fff',
+                  border: 'none', padding: '1rem', borderRadius: 12, fontSize: '0.85rem', fontWeight: 800,
+                  textTransform: 'uppercase', letterSpacing: '0.15em', transition: 'all 0.25s ease',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                  boxShadow: '0 8px 24px rgba(59,130,246,0.3)', cursor: 'pointer'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(59,130,246,0.45)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.3)'; }}
+              >
+                <RefreshCw size={18} /> Swap For This
               </button>
             </div>
 

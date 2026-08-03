@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 import Footer from '../components/Footer';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const NT = {
@@ -20,20 +20,72 @@ export default function ForgotPassword() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    
     setError('');
     setLoading(true);
+    
     try {
-      await sendPasswordResetEmail(auth, email, { url: window.location.origin + '/login' });
-      setEmailSent(true);
-      toast.success('Password reset email sent!');
-    } catch (err) {
-      console.error(err);
-      if (err.code === 'auth/user-not-found') {
-        setError('No account found with this email address.');
-      } else {
-        setError('Failed to send reset email. Please try again.');
+      // Step 1: Check if the email actually exists in Firestore
+      // Firebase's sendPasswordResetEmail silently succeeds for security reasons
+      // even if the email doesn't exist. We want to give real feedback.
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const { db } = await import('../firebase');
+      
+      const usersRef = collection(db, 'users');
+      const emailQuery = email.trim();
+      
+      // Try exact match first
+      let q = query(usersRef, where('email', '==', emailQuery));
+      let snap = await getDocs(q);
+      
+      // If exact match fails, try lowercase (since some users might type it differently)
+      if (snap.empty) {
+        q = query(usersRef, where('email', '==', emailQuery.toLowerCase()));
+        snap = await getDocs(q);
       }
-      toast.error('Failed to send reset link.');
+      
+      if (snap.empty) {
+        setError('No account found with this email address.');
+        toast.error('Account not found.');
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Send Firebase's built-in reset email. 
+      await sendPasswordResetEmail(auth, email.trim());
+      
+      setEmailSent(true);
+      toast.success('Password reset email sent! Check your inbox.');
+    } catch (err) {
+      console.error('Password reset error:', err.code, err.message);
+      let msg = 'Failed to send reset email. Please try again.';
+      switch (err.code) {
+        case 'auth/user-not-found':
+          // Firebase might silently succeed instead of throwing this now, 
+          // but we handle it just in case.
+          msg = 'No account found with this email address.';
+          break;
+        case 'auth/invalid-email':
+          msg = 'Please enter a valid email address.';
+          break;
+        case 'auth/too-many-requests':
+          msg = 'Too many requests. Please wait a few minutes and try again.';
+          break;
+        case 'auth/unauthorized-continue-uri':
+          msg = 'Domain configuration error. Please contact support.';
+          break;
+        case 'auth/network-request-failed':
+          msg = 'Network error. Please check your internet connection.';
+          break;
+        default:
+          msg = err.message || 'Failed to send reset email. Please try again.';
+      }
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -51,7 +103,10 @@ export default function ForgotPassword() {
               Check Your Email
             </h2>
             <p style={{ color: NT.textMuted, fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '2rem' }}>
-              We've sent a password reset link to <strong style={{ color: NT.textMain }}>{email}</strong>. Click the link in that email to create a new password.
+              We've sent a secure password reset link to <strong style={{ color: NT.textMain }}>{email}</strong>. Click the link in that email to create a new password.
+            </p>
+            <p style={{ color: NT.textMuted, fontSize: '0.75rem', lineHeight: 1.5, marginBottom: '2.5rem', fontStyle: 'italic' }}>
+              Didn't receive it? Check your spam folder or ensure the email address is correct.
             </p>
             <Link
               to="/login"
@@ -91,7 +146,6 @@ export default function ForgotPassword() {
           <div style={{ background: NT.card, border: `1px solid ${NT.border}`, borderRadius: 20, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.5)' }}>
             {/* Header */}
             <div style={{ background: 'linear-gradient(135deg,#1A1A1E,#161618)', borderBottom: `1px solid ${NT.border}`, padding: '1.75rem 2rem', position: 'relative', overflow: 'hidden' }}>
-              <div className="bg-circuit" style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none' }} />
               <Link
                 to="/login"
                 style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'inline-flex', alignItems: 'center', gap: 5, color: NT.textMuted, fontSize: '0.7rem', fontWeight: 700, textDecoration: 'none', fontFamily: 'Rajdhani, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em', transition: 'color 0.2s' }}
@@ -107,7 +161,7 @@ export default function ForgotPassword() {
                 <h1 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '1.6rem', fontWeight: 800, color: NT.textMain, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                   Reset Password
                 </h1>
-                <p style={{ color: NT.textMuted, fontSize: '0.8rem', marginTop: 4 }}>Enter your email to receive a reset link</p>
+                <p style={{ color: NT.textMuted, fontSize: '0.8rem', marginTop: 4 }}>Enter your email to receive a secure reset link</p>
               </div>
             </div>
 
@@ -156,9 +210,9 @@ export default function ForgotPassword() {
                   }}
                 >
                   {loading ? (
-                    <><i className="fas fa-spinner fa-spin" /> Sending Code...</>
+                    <><RefreshCw size={16} className="animate-spin" /> Sending Link...</>
                   ) : (
-                    <>Send Reset Code</>
+                    <>Send Reset Link</>
                   )}
                 </button>
 

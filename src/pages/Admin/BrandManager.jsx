@@ -99,7 +99,7 @@ export default function BrandManager() {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <i className="fas fa-trademark text-zeal-red"></i> Manage Brands
+        <i className="fas fa-trademark" style={{ color: '#D42B2B' }}></i> Manage Brands
       </h2>
 
       {/* Add New Brand Form */}
@@ -112,13 +112,13 @@ export default function BrandManager() {
             onChange={(e) => setNewBrandName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddBrand()}
             placeholder="e.g., Samsung, LG, Apple..."
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-zeal-blue focus:border-transparent outline-none"
+            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brandRed focus:border-transparent outline-none text-gray-900"
             disabled={loading}
           />
           <button
             onClick={handleAddBrand}
             disabled={loading || !newBrandName.trim()}
-            className="bg-zeal-blue hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="bg-brandRed hover:bg-brandRedDark text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             <Plus size={18} /> Add
           </button>

@@ -1,6 +1,6 @@
 import { Navigate, Outlet, NavLink } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
-import { Package, PlusCircle, LogOut, User, Users, ClipboardList, Settings, Menu, X, Tag, Briefcase } from 'lucide-react';
+import { Package, PlusCircle, LogOut, User, Users, ClipboardList, Settings, Menu, X, Tag, Briefcase, RefreshCw } from 'lucide-react';
 import { auth } from '../../firebase';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
@@ -26,8 +26,12 @@ export default function AdminLayout() {
   const navLinks = [
     { to: "/admin", icon: <Package size={18} />, label: "Manage Products", end: true },
     { to: "/admin/categories", icon: <Tag size={18} />, label: "Manage Categories" },
+    { to: "/admin/subcategories", icon: <Tag size={18} />, label: "Manage Subcategories" },
     { to: "/admin/brands", icon: <Briefcase size={18} />, label: "Manage Brands" },
+    { to: "/admin/specifications", icon: <Settings size={18} />, label: "Manage Specifications" },
     { to: "/admin/orders", icon: <ClipboardList size={18} />, label: "Customer Orders" },
+    { to: "/admin/swaps", icon: <RefreshCw size={18} />, label: "Swap Requests" },
+    { to: "/admin/trade-ins", icon: <Settings size={18} />, label: "Trade-in Catalog" },
     { to: "/admin/users", icon: <Users size={18} />, label: "Registered Users" },
     { to: "/admin/new", icon: <PlusCircle size={18} />, label: "Add Product" },
     { to: "/admin/settings", icon: <Settings size={18} />, label: "Site Settings" },
