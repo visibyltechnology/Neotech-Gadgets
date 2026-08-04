@@ -3,6 +3,7 @@ import { collection, onSnapshot, doc, updateDoc, query, orderBy } from 'firebase
 import { db } from '../../firebase';
 import { RefreshCw, Search, Calendar, ChevronRight, XCircle, Package, Download, ExternalLink, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { createNotification, NOTIFICATION_TYPES } from '../../utils/notificationService';
 
 export default function AdminSwaps() {
   const [swaps, setSwaps] = useState([]);
@@ -11,6 +12,42 @@ export default function AdminSwaps() {
   const [statusFilter, setStatusFilter] = useState('all'); 
   
   const [selectedSwap, setSelectedSwap] = useState(null);
+  const [quoteAmount, setQuoteAmount] = useState('');
+  const [submittingQuote, setSubmittingQuote] = useState(false);
+  const [confirmStatusModal, setConfirmStatusModal] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const handleSubmitQuote = async (e) => {
+    e.preventDefault();
+    if (!quoteAmount || isNaN(quoteAmount)) return toast.error('Enter a valid amount');
+    setSubmittingQuote(true);
+    try {
+      const numericAmount = Number(quoteAmount);
+      await updateDoc(doc(db, 'swapRequests', selectedSwap.id), {
+        estimatedValue: numericAmount,
+        updatedAt: new Date()
+      });
+      
+      setSelectedSwap({ ...selectedSwap, estimatedValue: numericAmount });
+      
+      if (selectedSwap.userId) {
+        await createNotification(selectedSwap.userId, NOTIFICATION_TYPES.SWAP_UPDATE, {
+          title: 'Quotation Updated',
+          message: `Your ${selectedSwap.intent} request (${selectedSwap.referenceId}) has received a new quotation of ₦${numericAmount.toLocaleString()}.`,
+          referenceId: selectedSwap.referenceId,
+          status: selectedSwap.status,
+          link: '/profile'
+        });
+      }
+      
+      toast.success('Quotation updated and user notified');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update quotation');
+    } finally {
+      setSubmittingQuote(false);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'swapRequests'), orderBy('createdAt', 'desc'));
@@ -25,7 +62,7 @@ export default function AdminSwaps() {
     return () => unsub();
   }, []);
 
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (id, newStatus, userId, referenceId) => {
     try {
       await updateDoc(doc(db, 'swapRequests', id), {
         status: newStatus,
@@ -34,6 +71,19 @@ export default function AdminSwaps() {
       toast.success(`Request status updated to ${newStatus}`);
       if (selectedSwap && selectedSwap.id === id) {
         setSelectedSwap({ ...selectedSwap, status: newStatus });
+      }
+
+      // Notify the user
+      if (userId) {
+        const title = `Swap Request Updated`;
+        const message = `Your swap request (${referenceId}) is now ${newStatus}.`;
+        await createNotification(userId, NOTIFICATION_TYPES.SWAP_UPDATE, {
+          title,
+          message,
+          referenceId,
+          status: newStatus,
+          link: '/profile' // We will add a swaps tab to profile
+        });
       }
     } catch (err) {
       console.error(err);
@@ -166,7 +216,10 @@ export default function AdminSwaps() {
                     </td>
                     <td className="p-4 text-right">
                       <button 
-                        onClick={() => setSelectedSwap(swap)}
+                        onClick={() => {
+                          setSelectedSwap(swap);
+                          setQuoteAmount(swap.estimatedValue || '');
+                        }}
                         className="inline-flex items-center gap-1 text-sm font-bold text-gray-600 hover:text-brandRed bg-white border border-gray-200 hover:border-brandRed px-3 py-1.5 rounded-lg transition-all shadow-sm"
                       >
                         View <ChevronRight size={16} />
@@ -251,10 +304,10 @@ export default function AdminSwaps() {
                   </div>
                   <div className="space-y-2 mt-4">
                     <div className="grid grid-cols-2 gap-2">
-                      <button onClick={() => handleStatusChange(selectedSwap.id, 'pending')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'pending' ? 'bg-yellow-100 border-yellow-300 text-yellow-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Pending</button>
-                      <button onClick={() => handleStatusChange(selectedSwap.id, 'reviewed')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'reviewed' ? 'bg-blue-100 border-blue-300 text-blue-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Reviewed</button>
-                      <button onClick={() => handleStatusChange(selectedSwap.id, 'accepted')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'accepted' ? 'bg-green-100 border-green-300 text-green-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Accepted</button>
-                      <button onClick={() => handleStatusChange(selectedSwap.id, 'rejected')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'rejected' ? 'bg-red-100 border-red-300 text-red-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Rejected</button>
+                      <button onClick={() => setConfirmStatusModal('pending')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'pending' ? 'bg-yellow-100 border-yellow-300 text-yellow-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Pending</button>
+                      <button onClick={() => setConfirmStatusModal('reviewed')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'reviewed' ? 'bg-blue-100 border-blue-300 text-blue-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Reviewed</button>
+                      <button onClick={() => setConfirmStatusModal('accepted')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'accepted' ? 'bg-green-100 border-green-300 text-green-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Accepted</button>
+                      <button onClick={() => setConfirmStatusModal('rejected')} className={`p-2 text-xs font-bold rounded-lg border transition-all ${selectedSwap.status === 'rejected' ? 'bg-red-100 border-red-300 text-red-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>Rejected</button>
                     </div>
                   </div>
                 </div>
@@ -361,12 +414,75 @@ export default function AdminSwaps() {
                   ))}
                 </div>
                 
-                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 text-yellow-800 text-sm font-bold flex gap-3 mt-4">
-                  <DollarSign className="text-yellow-600 flex-shrink-0" />
-                  <p>Quotation Pending: Please review the detailed specifications and hardware conditions above and contact the customer at {selectedSwap.phone} to negotiate the final {selectedSwap.intent === 'sell' ? 'purchase price' : 'swap difference'}.</p>
+                <div className="bg-white p-4 rounded-xl border border-gray-200 mt-4 shadow-sm">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-brandRed mb-3 flex items-center gap-2">
+                    <DollarSign size={16} /> Quotation Management
+                  </h4>
+                  {selectedSwap.estimatedValue && (
+                    <div className="mb-4 bg-emerald-50 text-emerald-800 p-3 rounded-lg flex justify-between items-center border border-emerald-100">
+                      <span className="font-bold text-sm uppercase tracking-wider">Current Quotation:</span>
+                      <span className="font-black text-lg">₦{Number(selectedSwap.estimatedValue).toLocaleString()}</span>
+                    </div>
+                  )}
+                  <form onSubmit={handleSubmitQuote} className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Set New Quotation Amount (₦)</label>
+                      <input 
+                        type="number" 
+                        value={quoteAmount}
+                        onChange={(e) => setQuoteAmount(e.target.value)}
+                        placeholder="e.g. 150000"
+                        className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 px-3 text-sm font-bold focus:border-brandRed focus:ring-1 focus:ring-brandRed outline-none"
+                      />
+                    </div>
+                    <button 
+                      type="submit"
+                      disabled={submittingQuote}
+                      className="bg-brandRed hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+                    >
+                      {submittingQuote ? <RefreshCw className="animate-spin" size={16} /> : 'Send Quote'}
+                    </button>
+                  </form>
+                  <p className="text-[10px] text-gray-400 mt-2 italic font-medium">* Updating the quotation will instantly notify the customer.</p>
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmStatusModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+            <button onClick={() => setConfirmStatusModal(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <XCircle size={24} />
+            </button>
+            <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight mb-2">Confirm Action</h3>
+            <p className="text-sm text-gray-600 font-medium mb-6">
+              Are you sure you want to change this request status to <span className="font-bold text-gray-900 uppercase">{confirmStatusModal}</span>? The customer will be notified of this change.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setConfirmStatusModal(null)}
+                className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                disabled={updatingStatus}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  setUpdatingStatus(true);
+                  await handleStatusChange(selectedSwap.id, confirmStatusModal, selectedSwap.userId, selectedSwap.referenceId);
+                  setUpdatingStatus(false);
+                  setConfirmStatusModal(null);
+                }}
+                disabled={updatingStatus}
+                className="px-4 py-2 text-sm font-bold text-white bg-brandRed rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {updatingStatus ? <RefreshCw className="animate-spin" size={16} /> : 'Yes, Change'}
+              </button>
             </div>
           </div>
         </div>

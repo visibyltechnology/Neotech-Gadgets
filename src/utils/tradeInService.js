@@ -1,4 +1,4 @@
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 
 // Helper to sanitize IDs
@@ -16,11 +16,20 @@ export const listenToTradeInDevices = (callback) => {
     snapshot.forEach((doc) => {
       devices.push({ id: doc.id, ...doc.data() });
     });
-    // Sort alphabetically by brand then name
+    // Sort by order first, then by type, brand (sub category), and name (model)
     devices.sort((a, b) => {
-      if (a.brand < b.brand) return -1;
-      if (a.brand > b.brand) return 1;
-      return a.name.localeCompare(b.name);
+      const orderA = typeof a.order === 'number' ? a.order : 999999;
+      const orderB = typeof b.order === 'number' ? b.order : 999999;
+      if (orderA !== orderB) return orderA - orderB;
+      const typeA = a.deviceType || '';
+      const typeB = b.deviceType || '';
+      if (typeA < typeB) return -1;
+      if (typeA > typeB) return 1;
+      const brandA = a.brand || '';
+      const brandB = b.brand || '';
+      if (brandA < brandB) return -1;
+      if (brandA > brandB) return 1;
+      return (a.name || '').localeCompare(b.name || '');
     });
     callback(devices);
   });
@@ -35,7 +44,7 @@ export const saveTradeInDevice = async (device) => {
   }
   const id = device.id || generateId(`${device.brand}-${device.name}`);
   const deviceRef = doc(db, 'tradeInDevices', id);
-  await setDoc(deviceRef, {
+  const data = {
     name: device.name.trim(),
     brand: device.brand.trim(),
     deviceType: device.deviceType,
@@ -45,7 +54,13 @@ export const saveTradeInDevice = async (device) => {
     priceGood: Number(device.priceGood) || 0,
     priceFair: Number(device.priceFair) || 0,
     updatedAt: new Date().toISOString()
-  }, { merge: true });
+  };
+  if (device.order !== undefined) {
+    data.order = device.order;
+  } else if (!device.id) {
+    data.order = Date.now();
+  }
+  await setDoc(deviceRef, data, { merge: true });
 };
 
 /**
@@ -53,4 +68,15 @@ export const saveTradeInDevice = async (device) => {
  */
 export const deleteTradeInDevice = async (id) => {
   await deleteDoc(doc(db, 'tradeInDevices', id));
+};
+
+/**
+ * Update the order of all devices in bulk
+ */
+export const updateAllDeviceOrders = async (orderedDevices) => {
+  const batch = writeBatch(db);
+  orderedDevices.forEach((device, index) => {
+    batch.update(doc(db, 'tradeInDevices', device.id), { order: index });
+  });
+  await batch.commit();
 };

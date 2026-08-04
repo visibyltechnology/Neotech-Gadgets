@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, ArrowLeft, ChevronDown, CheckCircle, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, ChevronDown, CheckCircle, ShieldCheck, RefreshCw } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Footer from '../components/Footer';
@@ -164,7 +164,7 @@ export default function ProductDetail() {
 
   return (
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0E0E10' }}>
-      <div className="px-4 sm:px-6" style={{ maxWidth: '80rem', mx: 'auto', paddingTop: '2rem', paddingBottom: '2rem', width: '100%', flex: 1 }}>
+      <div className="px-4 sm:px-6" style={{ maxWidth: '80rem', margin: '0 auto', paddingTop: '2rem', paddingBottom: '2rem', width: '100%', flex: 1 }}>
         
         {/* Breadcrumb / Back */}
         <div style={{ marginBottom: '1.5rem' }}>
@@ -173,7 +173,7 @@ export default function ProductDetail() {
           </Link>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3rem', lg: { gap: '4rem' } }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3rem' }}>
           
           {/* Image Column */}
           <div style={{ width: '100%', flex: '1 1 400px', maxWidth: '100%' }}>

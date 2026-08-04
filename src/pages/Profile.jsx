@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs, runTransaction } from '
 import { auth, db } from '../firebase';
 import useAuthStore from '../store/useAuthStore';
 import Footer from '../components/Footer';
-import { Package, Clock, CheckCircle, ShoppingBag, Search, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { Package, Clock, CheckCircle, ShoppingBag, Search, ChevronDown, ChevronUp, SlidersHorizontal, ArrowLeftRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import OrderTrackingStepper from '../components/OrderTrackingStepper';
 import { INTEREST_RATES_DECIMAL } from '../utils/interestRates';
@@ -42,6 +42,7 @@ export default function Profile() {
 
   const [profileData, setProfileData] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [swapRequests, setSwapRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [customAmounts, setCustomAmounts] = useState({});
@@ -68,6 +69,12 @@ export default function Profile() {
         const ordersData = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         ordersData.sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
         setOrders(ordersData);
+
+        const sq = query(collection(db, "swapRequests"), where("userId", "==", user.uid));
+        const swapSnap = await getDocs(sq);
+        const swapsData = swapSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        swapsData.sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+        setSwapRequests(swapsData);
       } catch (err) {
         console.error("Profile load error:", err);
         if (err.message && err.message.toLowerCase().includes('offline')) {
@@ -616,6 +623,108 @@ export default function Profile() {
                               )}
                             </div>
                           )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Trade-Ins & Swaps Section */}
+          {!isAdmin && (
+            <div style={{ background: NT.card, border: `1px solid ${NT.border}`, borderRadius: 20, overflow: 'hidden', marginTop: '1rem' }}>
+              <div style={{ background: 'linear-gradient(135deg,#1A1A1E,#161618)', borderBottom: `1px solid ${NT.border}`, padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div className="bg-circuit" style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none' }} />
+                <h2 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: NT.textMain, textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0, position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ArrowLeftRight size={14} style={{ color: NT.primary }} /> Trade-ins & Swaps History
+                </h2>
+              </div>
+              
+              <div style={{ padding: '1.75rem' }}>
+                {swapRequests.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3.5rem 0' }}>
+                    <ArrowLeftRight size={48} style={{ color: NT.border, marginBottom: '1rem', display: 'block', margin: '0 auto 1rem' }} />
+                    <p style={{ color: NT.textMuted, fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+                      You haven't made any trade-in or swap requests.
+                    </p>
+                    <Link
+                      to="/swap"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(212,43,43,0.1)', color: NT.primary, border: '1px solid rgba(212,43,43,0.3)', fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.75rem 1.75rem', borderRadius: 10, textDecoration: 'none' }}
+                    >
+                      <ArrowLeftRight size={14} /> Start a Swap
+                    </Link>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {swapRequests.map(swap => {
+                      let statusBadge = { bg: 'rgba(112, 112, 128, 0.1)', color: '#707080', border: 'rgba(112, 112, 128, 0.3)' };
+                      if (swap.status === 'pending') statusBadge = { bg: 'rgba(240, 165, 0, 0.1)', color: '#F0A500', border: 'rgba(240, 165, 0, 0.3)' };
+                      if (swap.status === 'reviewed') statusBadge = { bg: 'rgba(96, 165, 250, 0.1)', color: '#60a5fa', border: 'rgba(96, 165, 250, 0.3)' };
+                      if (swap.status === 'accepted') statusBadge = { bg: 'rgba(74, 222, 128, 0.1)', color: '#4ade80', border: 'rgba(74, 222, 128, 0.3)' };
+                      if (swap.status === 'rejected') statusBadge = { bg: 'rgba(212, 43, 43, 0.1)', color: '#D42B2B', border: 'rgba(212, 43, 43, 0.3)' };
+
+                      return (
+                        <div key={swap.id} style={{ border: `1px solid ${NT.border}`, borderRadius: 16, overflow: 'hidden' }}>
+                          <div style={{ background: NT.bg, borderBottom: `1px solid ${NT.border}`, padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(212,43,43,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: NT.primary }}>
+                                <ArrowLeftRight size={18} />
+                              </div>
+                              <div>
+                                <p style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '0.95rem', fontWeight: 800, color: NT.textMain, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                  {swap.intent === 'sell' ? 'Sell Request' : 'Swap Request'}
+                                </p>
+                                <p style={{ fontSize: '0.7rem', color: NT.textMuted }}>
+                                  {swap.createdAt?.toDate ? swap.createdAt.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'} 
+                                  <span style={{ margin: '0 6px', color: NT.border }}>|</span> 
+                                  <span style={{ fontFamily: 'mono', color: NT.primary, fontWeight: 700 }}>{swap.referenceId}</span>
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontSize: '0.6rem', fontWeight: 800, padding: '4px 10px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Rajdhani, sans-serif', background: statusBadge.bg, color: statusBadge.color, border: `1px solid ${statusBadge.border}` }}>
+                                {swap.status}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div style={{ padding: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                            <div>
+                              <p style={{ fontSize: '0.6rem', fontWeight: 700, color: NT.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Rajdhani, sans-serif', marginBottom: 4 }}>
+                                Devices Submitted
+                              </p>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {(swap.devices || []).map((device, idx) => (
+                                  <div key={idx} style={{ fontSize: '0.85rem', color: NT.textMain, fontWeight: 600 }}>
+                                    • {device.brand} {device.name} <span style={{ color: NT.textMuted, fontSize: '0.7rem', fontWeight: 400 }}>({device.condition?.replace('_', ' ')})</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            {swap.intent === 'swap' && swap.targetProductName && (
+                              <div>
+                                <p style={{ fontSize: '0.6rem', fontWeight: 700, color: NT.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Rajdhani, sans-serif', marginBottom: 4 }}>
+                                  Target Upgrade
+                                </p>
+                                <p style={{ fontSize: '0.85rem', color: '#4ade80', fontWeight: 700 }}>
+                                  {swap.targetProductName}
+                                </p>
+                              </div>
+                            )}
+
+                            <div>
+                              <p style={{ fontSize: '0.6rem', fontWeight: 700, color: NT.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Rajdhani, sans-serif', marginBottom: 4 }}>
+                                Estimated Value
+                              </p>
+                              <p style={{ fontSize: '1rem', color: NT.textMain, fontWeight: 800, fontFamily: 'Rajdhani, sans-serif' }}>
+                                {swap.estimatedValue ? fmt(swap.estimatedValue) : 'Manual Quote Pending'}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       );
                     })}

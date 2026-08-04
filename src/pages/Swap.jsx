@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { createNotification, NOTIFICATION_TYPES } from '../utils/notificationService';
 import { db } from '../firebase';
 import { listenToTradeInDevices } from '../utils/tradeInService';
 import { getPricingRules } from '../utils/pricingConfigService';
@@ -10,8 +11,29 @@ import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
 import { 
   ArrowLeftRight, CheckCircle2, Package, ChevronRight, Star, Shield, Clock, 
-  Zap, AlertCircle, RefreshCw, UploadCloud, FileText, Camera, CreditCard, ArrowLeft, DollarSign
+  Zap, AlertCircle, RefreshCw, UploadCloud, FileText, Camera, CreditCard, ArrowLeft, DollarSign, Search, XCircle
 } from 'lucide-react';
+
+const getSubCategoryLabel = (deviceType, brand) => {
+  const b = (brand || '').toLowerCase();
+  if (deviceType === 'phone') {
+    if (b.includes('apple') || b.includes('iphone')) return 'iPhone';
+    return 'Android';
+  }
+  if (deviceType === 'tablet') {
+    if (b.includes('apple') || b.includes('ipad')) return 'iPad';
+    return 'Android Tablet';
+  }
+  if (deviceType === 'laptop') {
+    if (b.includes('apple') || b.includes('mac')) return 'MacBook';
+    return 'Windows Laptop';
+  }
+  if (deviceType === 'watch') {
+    if (b.includes('apple')) return 'Apple Watch';
+    return 'Smartwatch';
+  }
+  return brand;
+};
 
 const DEVICE_CONDITIONS = [
   { value: 'brand_new', label: 'Brand new', desc: 'Completely unused, original seal intact, no activation.', color: '#8b5cf6' },
@@ -45,6 +67,35 @@ export default function SwapPage() {
   const [submitted, setSubmitted] = useState(false);
   const [referenceId, setReferenceId] = useState('');
   
+  // Tracking Modal State
+  const [showTrackModal, setShowTrackModal] = useState(false);
+  const [trackRefId, setTrackRefId] = useState('');
+  const [trackResult, setTrackResult] = useState(null);
+  const [trackLoading, setTrackLoading] = useState(false);
+  const [trackError, setTrackError] = useState('');
+
+  const handleTrackRequest = async (e) => {
+    e.preventDefault();
+    if (!trackRefId.trim()) return toast.error("Please enter a Reference ID");
+    setTrackLoading(true);
+    setTrackError('');
+    setTrackResult(null);
+    try {
+      const q = query(collection(db, 'swapRequests'), where('referenceId', '==', trackRefId.trim().toUpperCase()));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        setTrackError("No request found with this Reference ID.");
+      } else {
+        setTrackResult({ id: snap.docs[0].id, ...snap.docs[0].data() });
+      }
+    } catch (err) {
+      console.error(err);
+      setTrackError("Failed to track request. Please try again.");
+    } finally {
+      setTrackLoading(false);
+    }
+  };
+
   // Products for Swap Selection
   const [storeProducts, setStoreProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -60,9 +111,16 @@ export default function SwapPage() {
 
   // Step 3: Identity & Contact
   const [contactInfo, setContactInfo] = useState({
+    fullName: '',
     phone: '',
     location: '',
   });
+
+  useEffect(() => {
+    if (user && !contactInfo.fullName) {
+      setContactInfo(prev => ({ ...prev, fullName: user.displayName || '' }));
+    }
+  }, [user]);
   const [idCardFile, setIdCardFile] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
 
@@ -99,7 +157,7 @@ export default function SwapPage() {
   useEffect(() => {
     setDevices(Array.from({ length: numDevices }, () => ({
       deviceType: '',
-      brand: '',
+      subCategory: '',
       tradeInDeviceId: '',
       condition: '',
       phoneStorage: '',
@@ -271,7 +329,7 @@ export default function SwapPage() {
       const payload = {
         referenceId: newRefId,
         userId: user.uid,
-        fullName: user.displayName || 'Customer',
+        fullName: contactInfo.fullName || user.displayName || 'Customer',
         email: user.email,
         phone: contactInfo.phone,
         location: contactInfo.location,
@@ -288,6 +346,19 @@ export default function SwapPage() {
       };
 
       await addDoc(collection(db, 'swapRequests'), payload);
+      
+      try {
+        await createNotification(user.uid, NOTIFICATION_TYPES.SWAP_UPDATE, {
+          title: 'Swap Request Submitted',
+          message: `Your ${intent} request (${newRefId}) has been successfully submitted and is under review.`,
+          referenceId: newRefId,
+          status: 'pending',
+          link: '/profile'
+        });
+      } catch (notifErr) {
+        console.error('Failed to create notification', notifErr);
+      }
+
       setReferenceId(newRefId);
       setSubmitted(true);
     } catch (error) {
@@ -319,7 +390,7 @@ export default function SwapPage() {
                 value={device.deviceType}
                 onChange={(e) => {
                   updateDeviceField(index, 'deviceType', e.target.value);
-                  updateDeviceField(index, 'brand', '');
+                  updateDeviceField(index, 'subCategory', '');
                   updateDeviceField(index, 'tradeInDeviceId', '');
                 }}
                 className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-brandRed outline-none transition-all"
@@ -332,20 +403,23 @@ export default function SwapPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Brand *</label>
+              <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Sub-Category *</label>
               <select
                 required
                 disabled={!device.deviceType}
-                value={device.brand}
+                value={device.subCategory}
                 onChange={(e) => {
-                  updateDeviceField(index, 'brand', e.target.value);
+                  updateDeviceField(index, 'subCategory', e.target.value);
                   updateDeviceField(index, 'tradeInDeviceId', '');
                 }}
                 className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-brandRed outline-none transition-all disabled:opacity-50"
               >
-                <option value="">-- Brand --</option>
-                {[...new Set(tradeInCatalog.filter(c => (c.deviceType || 'phone') === device.deviceType).map(c => c.brand))].map(brand => (
-                  <option key={brand} value={brand}>{brand}</option>
+                <option value="">-- Select Sub-Category --</option>
+                {[...new Set(tradeInCatalog
+                  .filter(c => (c.deviceType || 'phone') === device.deviceType)
+                  .map(c => getSubCategoryLabel(c.deviceType, c.brand)))
+                ].map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
                 ))}
               </select>
             </div>
@@ -354,16 +428,16 @@ export default function SwapPage() {
               <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Model *</label>
               <select
                 required
-                disabled={!device.brand}
+                disabled={!device.subCategory}
                 value={device.tradeInDeviceId}
                 onChange={(e) => updateDeviceField(index, 'tradeInDeviceId', e.target.value)}
                 className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-brandRed outline-none transition-all disabled:opacity-50"
               >
                 <option value="">-- Choose Model --</option>
                 {tradeInCatalog
-                  .filter(c => (c.deviceType || 'phone') === device.deviceType && c.brand === device.brand)
+                  .filter(c => (c.deviceType || 'phone') === device.deviceType && getSubCategoryLabel(c.deviceType, c.brand) === device.subCategory)
                   .map(item => (
-                  <option key={item.id} value={item.id}>{item.name}</option>
+                  <option key={item.id} value={item.id}>{item.brand} {item.name}</option>
                 ))}
               </select>
             </div>
@@ -619,6 +693,14 @@ export default function SwapPage() {
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto font-medium">
             Get the best market value for your old devices. Fill the detailed appraisal form below to get an accurate quotation from our experts.
           </p>
+          <div className="flex justify-center mt-8">
+            <button 
+              onClick={() => setShowTrackModal(true)} 
+              className="bg-gray-800/80 backdrop-blur-sm border border-gray-700 text-white py-3 px-6 rounded-xl font-bold uppercase tracking-wider hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-lg"
+            >
+              <Search size={18} className="text-brandRed" /> Track Existing Request
+            </button>
+          </div>
         </div>
       </div>
 
@@ -825,8 +907,8 @@ export default function SwapPage() {
                     <h3 className="text-xl font-black text-white uppercase tracking-tight mb-6">Contact Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Full Name</label>
-                        <input type="text" disabled value={user.displayName || ''} className="w-full bg-gray-900 border border-gray-700 text-gray-500 rounded-xl py-3 px-4 outline-none opacity-70" />
+                        <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Full Name *</label>
+                        <input required type="text" value={contactInfo.fullName} onChange={e => setContactInfo({...contactInfo, fullName: e.target.value})} placeholder="Enter your full name" className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-3 px-4 focus:border-brandRed outline-none" />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Email Address</label>
@@ -883,6 +965,82 @@ export default function SwapPage() {
         )}
 
       </div>
+
+      {/* Tracking Modal */}
+      {showTrackModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-2xl w-full max-w-md p-6 border border-gray-700 shadow-2xl relative">
+            <button onClick={() => setShowTrackModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <XCircle size={24} />
+            </button>
+            <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-2">
+              <Search className="text-brandRed" /> Track Request
+            </h3>
+            
+            <form onSubmit={handleTrackRequest} className="mb-6">
+              <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Enter Reference ID</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={trackRefId} 
+                  onChange={(e) => setTrackRefId(e.target.value)}
+                  placeholder="e.g. SWP-MGJGN3" 
+                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-2 px-4 focus:border-brandRed outline-none font-mono uppercase"
+                />
+                <button 
+                  type="submit" 
+                  disabled={trackLoading}
+                  className="bg-brandRed hover:bg-red-700 text-white px-4 rounded-xl font-bold transition-colors disabled:opacity-50 flex-shrink-0"
+                >
+                  {trackLoading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Track'}
+                </button>
+              </div>
+              {trackError && <p className="text-red-500 text-sm mt-2 font-medium">{trackError}</p>}
+            </form>
+
+            {trackResult && (
+              <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Status</p>
+                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                      trackResult.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
+                      trackResult.status === 'reviewed' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
+                      trackResult.status === 'accepted' ? 'bg-green-500/10 text-green-500 border border-green-500/20' :
+                      'bg-red-500/10 text-red-500 border border-red-500/20'
+                    }`}>
+                      {trackResult.status}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Date</p>
+                    <p className="text-sm text-gray-300">
+                      {trackResult.createdAt?.toDate ? trackResult.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 border-t border-gray-800 pt-3">
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Type</p>
+                    <p className="text-sm font-medium text-white capitalize">{trackResult.intent}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Devices</p>
+                    <p className="text-sm font-medium text-white">{trackResult.devices?.length || 0} Device(s)</p>
+                  </div>
+                  {trackResult.targetProductName && (
+                    <div>
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Target Upgrade</p>
+                      <p className="text-sm font-medium text-brandRed">{trackResult.targetProductName}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
