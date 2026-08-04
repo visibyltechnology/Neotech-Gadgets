@@ -112,16 +112,16 @@ export default function Home() {
                                         Nigeria's <span className="accent">Trusted Store</span> for UK Used &amp; Brand New Phones and Laptops
                                     </h1>
                                     <p className="hero-sub">
-                                        Shop for iPhones, laptops and all phones accessories. Nationwide delivery.<br/>
+                                        Shop for iPhones, laptops and all phones accessories. Nationwide delivery. We also offer easy <strong>device trade-ins</strong> and <strong>instant cash for your old gadgets</strong>!<br/>
                                         <span className="text-gray-400 font-semibold mt-2 inline-block">Buy now, or buy now and pay later with Klump</span>
                                     </p>
                                     
-                                    <div className="hero-actions">
+                                    <div className="hero-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                                         <Link to="/products" className="btn-primary">
                                             Explore Catalog <i className="fa-solid fa-arrow-right"></i>
                                         </Link>
-                                        <Link to="/products?cat=Smartphones" className="btn-ghost">
-                                            <i className="fa-solid fa-mobile-screen"></i> Latest Phones
+                                        <Link to="/swap" className="btn-ghost" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,130,246,0.2)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(59,130,246,0.1)'}>
+                                            <i className="fa-solid fa-right-left"></i> Sell or Swap Device
                                         </Link>
                                     </div>
 
