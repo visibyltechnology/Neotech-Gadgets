@@ -44,7 +44,9 @@ export default function ProductForm() {
     specifications: {},
     hasConditionPricing: false,
     priceBrandNew: '',
-    priceUkUsed: ''
+    priceUkUsed: '',
+    hasVariants: false,
+    variants: []
   });
   const [categories, setCategories] = useState([]);
   const [allSubcategories, setAllSubcategories] = useState([]);
@@ -203,12 +205,30 @@ export default function ProductForm() {
 
       if (imageUrls.length === 0) throw new Error('At least one product image is required');
 
+      let basePrice = Number(formData.price || 0);
+      let basePriceBrandNew = Number(formData.priceBrandNew || 0);
+      let basePriceUkUsed = Number(formData.priceUkUsed || 0);
+      
+      if (formData.hasVariants && formData.variants?.length > 0) {
+        if (formData.hasConditionPricing) {
+           const validBrandNew = formData.variants.map(v => Number(v.priceBrandNew || 0)).filter(p => p > 0);
+           const validUkUsed = formData.variants.map(v => Number(v.priceUkUsed || 0)).filter(p => p > 0);
+           if (validBrandNew.length > 0) basePriceBrandNew = Math.min(...validBrandNew);
+           if (validUkUsed.length > 0) basePriceUkUsed = Math.min(...validUkUsed);
+        } else {
+           const validPrices = formData.variants.map(v => Number(v.price || 0)).filter(p => p > 0);
+           if (validPrices.length > 0) basePrice = Math.min(...validPrices);
+        }
+      }
+
       const payload = {
         ...formData,
-        price: Number(formData.price || 0),
+        price: basePrice,
         hasConditionPricing: Boolean(formData.hasConditionPricing),
-        priceBrandNew: Number(formData.priceBrandNew || 0),
-        priceUkUsed: Number(formData.priceUkUsed || 0),
+        priceBrandNew: basePriceBrandNew,
+        priceUkUsed: basePriceUkUsed,
+        hasVariants: Boolean(formData.hasVariants),
+        variants: formData.variants || [],
         pss: Number(formData.pss || 0),
         brand: formData.brand || '',
         description: formData.description || '',
@@ -269,6 +289,27 @@ export default function ProductForm() {
       featuredPosition: positionInput 
     }));
     setShowFeaturedModal(false);
+  };
+
+  const handleAddVariant = () => {
+    setFormData(prev => ({
+      ...prev,
+      variants: [...(prev.variants || []), { id: Date.now().toString(), ram: '', storage: '', price: '', priceBrandNew: '', priceUkUsed: '' }]
+    }));
+  };
+
+  const handleUpdateVariant = (id, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: (prev.variants || []).map(v => v.id === id ? { ...v, [field]: value } : v)
+    }));
+  };
+
+  const handleRemoveVariant = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: (prev.variants || []).filter(v => v.id !== id)
+    }));
   };
 
   const catStyle = CATEGORY_STYLES[formData.category] || { bg: 'rgba(107,114,128,0.08)', text: '#6b7280', border: 'rgba(107,114,128,0.25)' };
@@ -609,6 +650,66 @@ export default function ProductForm() {
                       />
                     </div>
                   </FieldGroup>
+                </div>
+              )}
+            </div>
+
+            {/* Variants */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.hasVariants ? 16 : 0 }}>
+                <div>
+                  <h4 style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.875rem' }}>Product Variants (RAM & Storage)</h4>
+                  <p style={{ color: '#64748b', fontSize: '0.75rem', marginTop: 2 }}>Enable if this product has different specs (e.g. 128GB, 256GB).</p>
+                </div>
+                <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    name="hasVariants"
+                    checked={formData.hasVariants}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hasVariants: e.target.checked }))}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brandRed"></div>
+                </label>
+              </div>
+
+              {formData.hasVariants && (
+                <div>
+                  {(formData.variants || []).map((variant) => (
+                    <div key={variant.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, background: '#fff', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>RAM</label>
+                        <input type="text" value={variant.ram} onChange={e => handleUpdateVariant(variant.id, 'ram', e.target.value)} placeholder="e.g. 6GB" style={{...inputStyle, padding: '8px 12px'}} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Storage</label>
+                        <input type="text" value={variant.storage} onChange={e => handleUpdateVariant(variant.id, 'storage', e.target.value)} placeholder="e.g. 128GB" style={{...inputStyle, padding: '8px 12px'}} required />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <button type="button" onClick={() => handleRemoveVariant(variant.id)} style={{ padding: '8px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: 8, cursor: 'pointer' }}><X size={16} /></button>
+                      </div>
+                      {formData.hasConditionPricing ? (
+                        <>
+                          <div>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#1d4ed8', marginBottom: 4 }}>Price Brand New (₦)</label>
+                            <input type="number" value={variant.priceBrandNew} onChange={e => handleUpdateVariant(variant.id, 'priceBrandNew', e.target.value)} placeholder="0" style={{...inputStyle, padding: '8px 12px'}} required />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#f59e0b', marginBottom: 4 }}>Price UK Used (₦)</label>
+                            <input type="number" value={variant.priceUkUsed} onChange={e => handleUpdateVariant(variant.id, 'priceUkUsed', e.target.value)} placeholder="0" style={{...inputStyle, padding: '8px 12px'}} required />
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ gridColumn: 'span 2' }}>
+                          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#1d4ed8', marginBottom: 4 }}>Full Price (₦)</label>
+                          <input type="number" value={variant.price} onChange={e => handleUpdateVariant(variant.id, 'price', e.target.value)} placeholder="0" style={{...inputStyle, padding: '8px 12px'}} required />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" onClick={handleAddVariant} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '8px 16px', background: '#eff6ff', color: '#2563eb', border: '1px dashed #93c5fd', borderRadius: 8, cursor: 'pointer' }}>
+                    + Add Variant
+                  </button>
                 </div>
               )}
             </div>

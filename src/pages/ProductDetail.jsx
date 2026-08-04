@@ -25,6 +25,7 @@ export default function ProductDetail() {
 
   const [selectedImg, setSelectedImg] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [showInstallment, setShowInstallment] = useState(false);
   const [installments, setInstallments] = useState(2);
   const [paymentFrequency, setPaymentFrequency] = useState('monthly');
@@ -47,6 +48,9 @@ export default function ProductDetail() {
           setSelectedImg(data.img || data.images?.[0] || '');
           if (data.hasConditionPricing) {
             setSelectedCondition('Brand New');
+          }
+          if (data.hasVariants && data.variants?.length > 0) {
+            setSelectedVariantId(data.variants[0].id);
           }
         } else {
           setError("Product not found");
@@ -99,9 +103,21 @@ export default function ProductDetail() {
     );
   }
 
+  const selectedVariant = product.variants?.find(v => v.id === selectedVariantId);
+
+  let variantPrice = Number(product.price || 0);
+  let variantPriceBrandNew = Number(product.priceBrandNew || 0);
+  let variantPriceUkUsed = Number(product.priceUkUsed || 0);
+
+  if (product.hasVariants && selectedVariant) {
+     if (!product.hasConditionPricing) variantPrice = Number(selectedVariant.price || 0);
+     variantPriceBrandNew = Number(selectedVariant.priceBrandNew || 0);
+     variantPriceUkUsed = Number(selectedVariant.priceUkUsed || 0);
+  }
+
   const basePrice = product.hasConditionPricing 
-    ? (selectedCondition === 'Brand New' ? Number(product.priceBrandNew) : Number(product.priceUkUsed))
-    : Number(product.price);
+    ? (selectedCondition === 'Brand New' ? variantPriceBrandNew : variantPriceUkUsed)
+    : variantPrice;
   
   const price = basePrice;
   const monthlyRate = INTEREST_RATES_PERCENT[installments] / 100;
@@ -116,8 +132,19 @@ export default function ProductDetail() {
   const allImages = product.images && product.images.length > 0 ? product.images : [product.img].filter(Boolean);
 
   const getProductWithCondition = () => {
-    if (!product.hasConditionPricing) return product;
-    return { ...product, price: basePrice, selectedCondition };
+    let modifiedProduct = { ...product };
+    if (product.hasConditionPricing) {
+      modifiedProduct = { ...modifiedProduct, selectedCondition };
+    }
+    if (product.hasVariants && selectedVariant) {
+      modifiedProduct = { 
+        ...modifiedProduct, 
+        selectedVariantId, 
+        selectedVariant,
+        name: `${product.name} - ${selectedVariant.ram ? selectedVariant.ram + ' / ' : ''}${selectedVariant.storage}`
+      };
+    }
+    return { ...modifiedProduct, price: basePrice };
   };
 
   const handleBuyOnce = () => {
@@ -251,6 +278,33 @@ export default function ProductDetail() {
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ShieldCheck size={14} color="#D42B2B" /> Official Warranty</span>
               </div>
             </div>
+
+            {product.hasVariants && product.variants?.length > 0 && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E8E8F0', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Select Variant</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  {product.variants.map(variant => {
+                    const isSelected = selectedVariantId === variant.id;
+                    const variantLabel = [variant.ram, variant.storage].filter(Boolean).join(' / ');
+                    return (
+                      <button
+                        key={variant.id}
+                        onClick={() => setSelectedVariantId(variant.id)}
+                        style={{
+                          padding: '0.75rem 1rem', borderRadius: 12, cursor: 'pointer',
+                          background: isSelected ? 'rgba(59,130,246,0.1)' : '#161618',
+                          border: `2px solid ${isSelected ? '#3b82f6' : '#2A2A30'}`,
+                          color: isSelected ? '#fff' : '#C8C8D4', transition: 'all 0.2s',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                        }}
+                      >
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{variantLabel || 'Standard'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {product.hasConditionPricing && (
               <div style={{ marginBottom: '1.5rem' }}>

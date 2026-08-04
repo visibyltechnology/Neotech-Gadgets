@@ -16,7 +16,8 @@ const useCartStore = create(
               item.paymentChoice === paymentChoice &&
               item.installments === installments &&
               item.paymentFrequency === paymentFrequency &&
-              item.selectedCondition === product.selectedCondition
+              item.selectedCondition === product.selectedCondition &&
+              item.selectedVariantId === product.selectedVariantId
           );
 
           if (existingItemIndex > -1) {
