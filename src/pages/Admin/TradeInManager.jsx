@@ -32,8 +32,16 @@ export default function TradeInManager() {
     return () => unsub();
   }, []);
 
+  const uniqueDeviceTypes = Array.from(new Set(devices.map(d => d.deviceType || 'phone').filter(Boolean)));
   const uniqueSubCategories = Array.from(new Set(devices.map(d => d.brand).filter(Boolean)));
-  const uniqueModels = Array.from(new Set(devices.map(d => d.name).filter(Boolean)));
+  const uniqueModels = Array.from(
+    new Set(
+      devices
+        .filter(d => !formData.brand || d.brand.toLowerCase() === formData.brand.toLowerCase())
+        .map(d => d.name)
+        .filter(Boolean)
+    )
+  );
 
   const handleMoveUp = async (index) => {
     if (index === 0 || searchTerm) return;
@@ -263,16 +271,17 @@ export default function TradeInManager() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#9898A8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Device Type</label>
-                  <select 
+                  <input 
+                    type="text"
+                    list="deviceTypeList"
                     value={formData.deviceType}
-                    onChange={e => setFormData({...formData, deviceType: e.target.value})}
+                    onChange={e => setFormData({...formData, deviceType: e.target.value.toLowerCase()})}
                     style={{ width: '100%', background: '#1E1E22', border: '1px solid #2A2A30', borderRadius: 8, padding: '0.75rem', color: '#fff' }}
-                  >
-                    <option value="phone">Smartphone</option>
-                    <option value="laptop">Laptop / MacBook</option>
-                    <option value="tablet">Tablet / iPad</option>
-                    <option value="watch">Smartwatch</option>
-                  </select>
+                    required
+                  />
+                  <datalist id="deviceTypeList">
+                    {uniqueDeviceTypes.map((dt, i) => <option key={i} value={dt} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#9898A8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Sub Category (e.g. iPhone, Galaxy S)</label>
