@@ -165,15 +165,15 @@ export default function AdminSwaps() {
         </div>
 
         {/* Swaps Table */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full text-left border-collapse">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto hide-scrollbar">
+          <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-xs font-black text-gray-500 uppercase tracking-wider">
                 <th className="p-4">Reference ID</th>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Intent</th>
-                <th className="p-4 hidden md:table-cell">Devices</th>
-                <th className="p-4 hidden lg:table-cell">Date</th>
+                <th className="p-4">Devices</th>
+                <th className="p-4">Date</th>
                 <th className="p-4">Status</th>
                 <th className="p-4 text-right">Action</th>
               </tr>
@@ -205,10 +205,10 @@ export default function AdminSwaps() {
                         <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold uppercase">Swap</span>
                       )}
                     </td>
-                    <td className="p-4 hidden md:table-cell">
+                    <td className="p-4">
                       <p className="font-bold text-gray-800">{swap.devices?.length || 1} Device(s)</p>
                     </td>
-                    <td className="p-4 hidden lg:table-cell text-sm text-gray-600 font-medium">
+                    <td className="p-4 text-sm text-gray-600 font-medium">
                       {swap.createdAt?.toDate ? swap.createdAt.toDate().toLocaleDateString() : 'N/A'}
                     </td>
                     <td className="p-4">
