@@ -175,7 +175,8 @@ export default function TradeInManager() {
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div style={{ overflowX: 'auto' }} className="hide-scrollbar">
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
           <thead>
             <tr style={{ background: '#1E1E22', fontSize: '0.75rem', color: '#9898A8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               <th style={{ padding: '1rem 1.5rem', fontWeight: 800 }}>Sub Category</th>
@@ -243,7 +244,8 @@ export default function TradeInManager() {
               })
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {/* Modal */}
