@@ -13,6 +13,9 @@ export default function SiteSettings() {
         "🚚 Enjoy Fast Delivery Across Lagos — Free Shipping on Orders From ₦999,999.99!"
     ]);
 
+    // Good Mood Deals end time (ISO string stored in Firestore)
+    const [goodMoodDealsEnd, setGoodMoodDealsEnd] = useState('');
+
     const [heroSlides, setHeroSlides] = useState([
         {
             title: "Upgrade Your Living Space",
@@ -32,6 +35,7 @@ export default function SiteSettings() {
                     const data = docSnap.data();
                     if (data.tickerMessages) setTickerMessages(data.tickerMessages);
                     if (data.heroSlides) setHeroSlides(data.heroSlides);
+                    if (data.goodMoodDealsEnd) setGoodMoodDealsEnd(data.goodMoodDealsEnd);
                 }
             } catch (error) {
                 console.error("Error loading settings:", error);
@@ -48,7 +52,8 @@ export default function SiteSettings() {
         try {
             await setDoc(doc(db, 'settings', 'site_settings'), {
                 tickerMessages,
-                heroSlides
+                heroSlides,
+                goodMoodDealsEnd: goodMoodDealsEnd || ''
             }, { merge: true });
             toast.success("Settings saved successfully!");
         } catch (error) {
@@ -113,6 +118,48 @@ export default function SiteSettings() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                {/* Good Mood Deals Timer */}
+                <div className="lg:col-span-3">
+                    <div className="bg-white p-6 rounded-sm shadow-sm border border-amber-200">
+                        <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-4">
+                            <span className="text-xl">🔥</span>
+                            <div>
+                                <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest">Good Mood Deals — Countdown Timer</h3>
+                                <p className="text-xs text-gray-500 font-medium mt-0.5">Set the deal expiry date & time. The home page timer will count down to this moment.</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-4 items-end">
+                            <div className="flex-1">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Deal End Date & Time</label>
+                                <input
+                                    type="datetime-local"
+                                    value={goodMoodDealsEnd}
+                                    onChange={e => setGoodMoodDealsEnd(e.target.value)}
+                                    min={new Date().toISOString().slice(0, 16)}
+                                    className="w-full border border-gray-200 rounded-sm px-4 py-3 text-sm font-medium text-gray-800 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-200 transition-all"
+                                />
+                            </div>
+                            {goodMoodDealsEnd && (
+                                <div className="bg-amber-50 border border-amber-200 rounded-sm px-4 py-3 text-sm font-bold text-amber-700 flex-shrink-0">
+                                    ⏱ Ends: {new Date(goodMoodDealsEnd).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}
+                                </div>
+                            )}
+                            {goodMoodDealsEnd && (
+                                <button
+                                    onClick={() => setGoodMoodDealsEnd('')}
+                                    className="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wider flex-shrink-0 flex items-center gap-1"
+                                >
+                                    <Trash2 size={13} /> Clear
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-3">
+                            💡 Don't forget to click <strong>"Save Settings"</strong> above after setting the time.
+                        </p>
+                    </div>
+                </div>
+
                 {/* Ticker Settings */}
                 <div className="lg:col-span-1">
                     <div className="bg-white p-6 rounded-sm shadow-sm border border-gray-200 sticky top-8">

@@ -18,15 +18,33 @@ export default function Home() {
     const [bestSelling, setBestSelling] = useState([]);
     const [featured, setFeatured] = useState([]);
     const [featLoading, setFeatLoading] = useState(true);
+    const [goodMoodDeals, setGoodMoodDeals] = useState([]);
+    const [goodMoodLoading, setGoodMoodLoading] = useState(true);
     const [newsletterSent, setNewsletterSent] = useState(false);
     const navigate = useNavigate();
 
     // ── Deal Countdown Timer ──
-    const [time, setTime] = useState({ h: 9, m: 42, s: 17 });
+    const [time, setTime] = useState({ h: 0, m: 0, s: 0 });
+    const [dealEndTime, setDealEndTime] = useState(null);
+
     useEffect(() => {
-        const end = Date.now() + (9 * 3600 + 42 * 60 + 17) * 1000;
+        const fetchTimer = async () => {
+            try {
+                const docSnap = await getDoc(doc(db, 'settings', 'site_settings'));
+                if (docSnap.exists() && docSnap.data().goodMoodDealsEnd) {
+                    setDealEndTime(new Date(docSnap.data().goodMoodDealsEnd).getTime());
+                }
+            } catch (err) {
+                console.error('Timer fetch error:', err);
+            }
+        };
+        fetchTimer();
+    }, []);
+
+    useEffect(() => {
+        if (!dealEndTime) return;
         const id = setInterval(() => {
-            const diff = Math.max(0, end - Date.now());
+            const diff = Math.max(0, dealEndTime - Date.now());
             setTime({
                 h: Math.floor(diff / 3600000),
                 m: Math.floor((diff % 3600000) / 60000),
@@ -34,7 +52,7 @@ export default function Home() {
             });
         }, 1000);
         return () => clearInterval(id);
-    }, []);
+    }, [dealEndTime]);
     const pad = n => String(n).padStart(2, '0');
 
     // ── Data Fetching ──
@@ -79,6 +97,28 @@ export default function Home() {
             }
         };
         fetchData();
+    }, []);
+
+    // ── Good Mood Deals ──
+    useEffect(() => {
+        const fetchGoodMoodDeals = async () => {
+            try {
+                setGoodMoodLoading(true);
+                const q = query(
+                    collection(db, 'products'),
+                    where('folder', '==', 'Good Mood Deals'),
+                    where('is_hidden', '==', false),
+                    limit(8)
+                );
+                const snap = await getDocs(q);
+                setGoodMoodDeals(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            } catch (err) {
+                console.error('Good Mood Deals fetch error:', err);
+            } finally {
+                setGoodMoodLoading(false);
+            }
+        };
+        fetchGoodMoodDeals();
     }, []);
 
     const handleNewsletter = (e) => {
@@ -181,13 +221,13 @@ export default function Home() {
                     </section>
 
                     {/* ====================================================
-                        DEAL BANNER
+                        DEAL BANNER — Good Mood Deals
                     ==================================================== */}
                     <div className="deal-banner fade-in-up" role="region" aria-label="Flash deal">
                         <div className="deal-banner-glow"></div>
                         <div className="deal-meta">
                             <span className="deal-label"><i className="fa-solid fa-bolt"></i> Flash Deal of the Day</span>
-                            <h2 className="deal-title">Good mood deals</h2>
+                            <h2 className="deal-title">Good Mood Deals</h2>
                         </div>
 
                         <div className="deal-timer" aria-label="Countdown timer">
@@ -205,10 +245,36 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <Link to="/products" className="btn-primary" style={{ flexShrink: 0, padding: '0.85rem 1.75rem', fontSize: '0.85rem' }}>
+                        <Link to="/products?folder=Good+Mood+Deals" className="btn-primary" style={{ flexShrink: 0, padding: '0.85rem 1.75rem', fontSize: '0.85rem' }}>
                             Grab Deal <i className="fa-solid fa-arrow-right"></i>
                         </Link>
                     </div>
+
+                    {/* Good Mood Deals Product Grid */}
+                    {(goodMoodLoading || goodMoodDeals.length > 0) && (
+                        <section aria-labelledby="good-mood-title" className="fade-in-up delay-1">
+                            <div className="section-header">
+                                <div className="section-label">
+                                    <div className="section-bar" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}></div>
+                                    <h2 className="section-title" id="good-mood-title">🔥 Good Mood Deals</h2>
+                                </div>
+                                <Link to="/products?folder=Good+Mood+Deals" className="section-link">View All <i className="fa-solid fa-chevron-right"></i></Link>
+                            </div>
+                            <div className="products-grid">
+                                {goodMoodLoading
+                                    ? [1, 2, 3, 4].map(i => <SkeletonCard key={i} />)
+                                    : goodMoodDeals.map((product, idx) => (
+                                        <ProductCard
+                                            key={product.id}
+                                            product={product}
+                                            tagLabel={idx === 0 ? '🔥 Deal' : idx === 1 ? '⚡ Hot' : null}
+                                            onClick={() => navigate(`/products/${product.id}`)}
+                                        />
+                                    ))
+                                }
+                            </div>
+                        </section>
+                    )}
 
                     {/* ====================================================
                         TRENDING PRODUCTS

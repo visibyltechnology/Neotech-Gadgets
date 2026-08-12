@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { createNotification, NOTIFICATION_TYPES } from '../utils/notificationService';
 import { db } from '../firebase';
+import { createPortal } from 'react-dom';
 import { listenToTradeInDevices } from '../utils/tradeInService';
 import { getPricingRules } from '../utils/pricingConfigService';
 import { uploadSwapDocument } from '../utils/mediaUploadService';
@@ -34,6 +35,26 @@ const getSubCategoryLabel = (deviceType, brand) => {
   }
   return brand;
 };
+
+const KLUMP_PUBLIC_KEY = 'klp_pk_7e4780b45f194d81902b42f4ed2031f6b219fe82ec42464db113beea89c94967';
+let klumpScriptPromise = null;
+function loadKlumpScript() {
+  if (klumpScriptPromise) return klumpScriptPromise;
+  klumpScriptPromise = new Promise((resolve, reject) => {
+    const scriptId = 'klump-js-script';
+    if (document.getElementById(scriptId)) { resolve(); return; }
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = 'https://js.useklump.com/klump.js';
+    script.onload = () => resolve();
+    script.onerror = () => { klumpScriptPromise = null; reject(new Error('Failed to load Klump script')); };
+    document.body.appendChild(script);
+  });
+  return klumpScriptPromise;
+}
+function getKlump() {
+  try { return (0, eval)('Klump'); } catch (e) { return undefined; }
+}
 
 const DEVICE_CONDITIONS = [
   { value: 'brand_new', label: 'Brand new', desc: 'Completely unused, original seal intact, no activation.', color: '#8b5cf6' },
@@ -86,7 +107,15 @@ export default function SwapPage() {
       if (snap.empty) {
         setTrackError("No request found with this Reference ID.");
       } else {
-        setTrackResult({ id: snap.docs[0].id, ...snap.docs[0].data() });
+        const swapData = snap.docs[0].data();
+        let targetPrice = 0;
+        if (swapData.intent === 'swap' && swapData.targetProductId) {
+           const prodSnap = await getDoc(doc(db, 'products', swapData.targetProductId));
+           if (prodSnap.exists()) {
+              targetPrice = prodSnap.data().price;
+           }
+        }
+        setTrackResult({ id: snap.docs[0].id, ...swapData, targetPrice });
       }
     } catch (err) {
       console.error(err);
@@ -102,9 +131,100 @@ export default function SwapPage() {
   const [selectedProductName, setSelectedProductName] = useState('');
   const [productSearch, setProductSearch] = useState('');
 
+  const [klumpOpen, setKlumpOpen] = useState(false);
+  const [payError, setPayError] = useState('');
+
+  useEffect(() => {
+    let interval;
+    if (klumpOpen) {
+      interval = setInterval(() => {
+        document.querySelectorAll('iframe[src*="klump"], [id^="klump"]').forEach(el => {
+          if (el.style) {
+            el.style.setProperty('z-index', '2147483640', 'important');
+            if (el.id === 'klump__checkout') {
+              el.style.setProperty('position', 'fixed', 'important');
+            }
+          }
+        });
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [klumpOpen]);
+
   // Step 1: Setup
   const [intent, setIntent] = useState(targetProductId ? 'swap' : 'sell'); // 'swap' or 'sell'
   const [numDevices, setNumDevices] = useState(1);
+
+  const handleKlumpSwapPayment = async (excessAmount) => {
+    setTrackLoading(true);
+    setKlumpOpen(true);
+    setPayError('');
+    
+    try {
+      await loadKlumpScript();
+      const KlumpCtor = getKlump();
+      if (!KlumpCtor) throw new Error('Klump payment service unavailable. Check your connection.');
+      
+      new KlumpCtor({
+        publicKey: KLUMP_PUBLIC_KEY,
+        data: {
+          amount: Math.ceil(excessAmount),
+          shipping_fee: 0,
+          currency: 'NGN',
+          redirect_url: `${window.location.origin}/profile`,
+          merchant_reference: `SWP-EXCESS-${Date.now()}`,
+          meta_data: {
+            customer: user?.displayName || user?.email?.split('@')[0] || 'Customer',
+            email: user?.email || '',
+            swapRequestId: trackResult.id,
+          },
+          items: [{
+            image_url: 'https://neotechgadgets.com/logo.png',
+            item_url: `${window.location.origin}/swap`,
+            name: `Swap Excess for ${trackResult.targetProductName}`,
+            unit_price: Math.ceil(excessAmount),
+            quantity: 1,
+          }],
+        },
+        onSuccess: async (data) => {
+          setKlumpOpen(false);
+          // Update swap request to processing/payment_completed
+          try {
+            await updateDoc(doc(db, 'swapRequests', trackResult.id), {
+              status: 'payment_completed',
+              paymentRef: data?.data?.reference || `SWP-EXCESS-${Date.now()}`,
+              paymentMethod: 'klump_bnpl',
+              amountPaid: excessAmount,
+              updatedAt: new Date()
+            });
+            toast.success('Swap excess payment successful! We will begin processing your swap.');
+            setTrackResult(prev => ({ ...prev, status: 'payment_completed' }));
+          } catch (e) {
+            console.error(e);
+            toast.error('Payment succeeded but failed to update status. Please contact support.');
+          } finally {
+            setTrackLoading(false);
+          }
+        },
+        onError: () => {
+          setPayError('Klump payment failed or was declined.');
+          setTrackLoading(false);
+          setKlumpOpen(false);
+        },
+        onLoad: () => {
+          // loaded
+        },
+        onClose: () => {
+          setTrackLoading(false);
+          setKlumpOpen(false);
+        },
+      });
+    } catch (err) {
+      setPayError(err.message || 'Failed to load Klump.');
+      setTrackLoading(false);
+      setKlumpOpen(false);
+    }
+  };
 
   // Step 2: Devices Array
   const [devices, setDevices] = useState([]);
@@ -605,12 +725,13 @@ export default function SwapPage() {
                 </>
               )}
 
-              {isApple && deviceType !== 'watch' && (
+              {deviceType === 'phone' && (
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Face ID / Touch ID works?</label>
+                  <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Face ID / Touch ID working?</label>
                   <select value={device.faceIdWorking} onChange={(e) => updateDeviceField(index, 'faceIdWorking', e.target.value)} className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-2 px-4 focus:border-brandRed outline-none">
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
+                    <option value="yes">Yes — Working</option>
+                    <option value="no">No — Not Working</option>
+                    <option value="na">Not Applicable</option>
                   </select>
                 </div>
               )}
@@ -968,78 +1089,191 @@ export default function SwapPage() {
 
       {/* Tracking Modal */}
       {showTrackModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-gray-800 rounded-2xl w-full max-w-md p-6 border border-gray-700 shadow-2xl relative">
-            <button onClick={() => setShowTrackModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
-              <XCircle size={24} />
-            </button>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-2">
-              <Search className="text-brandRed" /> Track Request
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-2xl w-full max-w-lg border border-gray-700 shadow-2xl flex flex-col" style={{ maxHeight: '90vh' }}>
             
-            <form onSubmit={handleTrackRequest} className="mb-6">
-              <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Enter Reference ID</label>
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={trackRefId} 
-                  onChange={(e) => setTrackRefId(e.target.value)}
-                  placeholder="e.g. SWP-MGJGN3" 
-                  className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-2 px-4 focus:border-brandRed outline-none font-mono uppercase"
-                />
-                <button 
-                  type="submit" 
-                  disabled={trackLoading}
-                  className="bg-brandRed hover:bg-red-700 text-white px-4 rounded-xl font-bold transition-colors disabled:opacity-50 flex-shrink-0"
-                >
-                  {trackLoading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Track'}
-                </button>
-              </div>
-              {trackError && <p className="text-red-500 text-sm mt-2 font-medium">{trackError}</p>}
-            </form>
+            {/* Sticky Header — always visible */}
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-700 flex-shrink-0">
+              <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+                <Search className="text-brandRed" size={20} /> Track Request
+              </h3>
+              <button
+                onClick={() => { setShowTrackModal(false); setTrackResult(null); setTrackRefId(''); setTrackError(''); setPayError(''); }}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-700 hover:bg-brandRed text-gray-300 hover:text-white transition-all flex-shrink-0"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
 
-            {trackResult && (
-              <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Status</p>
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                      trackResult.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
-                      trackResult.status === 'reviewed' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
-                      trackResult.status === 'accepted' ? 'bg-green-500/10 text-green-500 border border-green-500/20' :
-                      'bg-red-500/10 text-red-500 border border-red-500/20'
-                    }`}>
-                      {trackResult.status}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Date</p>
-                    <p className="text-sm text-gray-300">
-                      {trackResult.createdAt?.toDate ? trackResult.createdAt.toDate().toLocaleDateString() : 'N/A'}
-                    </p>
-                  </div>
+            {/* Scrollable Body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-5">
+
+              {/* Search Form */}
+              <form onSubmit={handleTrackRequest}>
+                <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Enter Reference ID</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={trackRefId}
+                    onChange={(e) => setTrackRefId(e.target.value)}
+                    placeholder="e.g. SWP-MGJGN3"
+                    className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl py-2 px-4 focus:border-brandRed outline-none font-mono uppercase"
+                  />
+                  <button
+                    type="submit"
+                    disabled={trackLoading}
+                    className="bg-brandRed hover:bg-red-700 text-white px-5 rounded-xl font-bold transition-colors disabled:opacity-50 flex-shrink-0 flex items-center gap-2"
+                  >
+                    {trackLoading ? <RefreshCw className="animate-spin" size={18} /> : 'Track'}
+                  </button>
                 </div>
-                
-                <div className="space-y-3 border-t border-gray-800 pt-3">
-                  <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Type</p>
-                    <p className="text-sm font-medium text-white capitalize">{trackResult.intent}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Devices</p>
-                    <p className="text-sm font-medium text-white">{trackResult.devices?.length || 0} Device(s)</p>
-                  </div>
-                  {trackResult.targetProductName && (
+                {trackError && <p className="text-red-500 text-sm mt-2 font-medium">{trackError}</p>}
+              </form>
+
+              {/* Result */}
+              {trackResult && (
+                <div className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden">
+                  
+                  {/* Status Bar */}
+                  <div className="flex justify-between items-center px-4 py-3 border-b border-gray-800">
                     <div>
-                      <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Target Upgrade</p>
-                      <p className="text-sm font-medium text-brandRed">{trackResult.targetProductName}</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Status</p>
+                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                        trackResult.status === 'pending'  ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                        trackResult.status === 'reviewed' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                        trackResult.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                        trackResult.status === 'payment_completed' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                        'bg-red-500/10 text-red-400 border border-red-500/20'
+                      }`}>
+                        {trackResult.status === 'payment_completed' ? '✓ Payment Complete' : trackResult.status}
+                      </span>
                     </div>
-                  )}
+                    <div className="text-right">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Date</p>
+                      <p className="text-sm text-gray-300">
+                        {trackResult.createdAt?.toDate ? trackResult.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Type</p>
+                        <p className="text-sm font-bold text-white capitalize">{trackResult.intent}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Devices</p>
+                        <p className="text-sm font-bold text-white">{trackResult.devices?.length || 0} Device(s)</p>
+                      </div>
+                      {trackResult.targetProductName && (
+                        <div className="col-span-2">
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Target Upgrade</p>
+                          <p className="text-sm font-bold text-brandRed">{trackResult.targetProductName}</p>
+                        </div>
+                      )}
+                      {trackResult.estimatedValue != null && (
+                        <div className="col-span-2">
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Your Device Value (Quotation)</p>
+                          <p className="text-sm font-bold text-emerald-400">₦{Number(trackResult.estimatedValue).toLocaleString()}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {payError && (
+                      <p className="text-red-400 text-sm font-medium bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{payError}</p>
+                    )}
+
+                    {/* Klump Excess Payment Section */}
+                    {trackResult.status === 'accepted' && trackResult.intent === 'swap' && trackResult.targetPrice > 0 && trackResult.estimatedValue > 0 && (
+                      <div className="mt-2 pt-4 border-t border-gray-700 space-y-3">
+                        <p className="text-xs font-black text-brandRed uppercase tracking-widest">Swap Payment Breakdown</p>
+                        <div className="bg-gray-800 rounded-xl p-4 space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Target Price</span>
+                            <span className="font-bold text-white">₦{Number(trackResult.targetPrice).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Your Device Value</span>
+                            <span className="font-bold text-emerald-400">-₦{Number(trackResult.estimatedValue).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-sm pt-2 border-t border-gray-700">
+                            <span className="font-black text-white uppercase tracking-wide">Excess to Pay</span>
+                            <span className="font-black text-brandRed text-lg">₦{Math.max(0, trackResult.targetPrice - trackResult.estimatedValue).toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {trackResult.targetPrice > trackResult.estimatedValue && trackResult.status !== 'payment_completed' && (
+                          <button
+                            onClick={() => handleKlumpSwapPayment(trackResult.targetPrice - trackResult.estimatedValue)}
+                            disabled={trackLoading}
+                            className="w-full bg-brandRed hover:bg-red-700 text-white py-3 rounded-xl font-bold uppercase tracking-wider transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-60"
+                          >
+                            {trackLoading
+                              ? <><RefreshCw className="animate-spin" size={18} /> Processing...</>
+                              : <><Shield size={18} /> Buy Now Pay Later with Klump</>
+                            }
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Klump cancel overlay + checkout container — both portalled to document.body */}
+      {klumpOpen && createPortal(
+        <>
+          {/* Full-screen dimmer with cancel button — always on top */}
+          <div style={{
+            position: 'fixed', inset: 0,
+            zIndex: 2147483646,
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+            padding: '16px',
+            pointerEvents: 'none',
+          }}>
+            <button
+              onClick={() => {
+                try {
+                  const klumpDiv = document.getElementById('klump__checkout');
+                  if (klumpDiv) klumpDiv.innerHTML = '';
+                  document.querySelectorAll('[id^="klump"]').forEach(el => { if (el.id !== 'klump__checkout') el.remove(); });
+                  document.querySelectorAll('iframe[src*="klump"]').forEach(el => el.remove());
+                  setKlumpOpen(false);
+                  setTrackLoading(false);
+                  setPayError('Klump payment cancelled. Please try again.');
+                } catch { window.location.reload(); }
+              }}
+              style={{
+                pointerEvents: 'auto',
+                background: '#B30000',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '50px',
+                padding: '14px 26px',
+                fontWeight: 800,
+                fontSize: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.7)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                zIndex: 2147483647,
+              }}
+            >
+              ✖ Cancel Payment
+            </button>
+          </div>
+          {/* Klump mounts its iframe here — now on document.body, outside all stacking contexts */}
+          <div id="klump__checkout" />
+        </>,
+        document.body
       )}
 
       <Footer />

@@ -46,7 +46,8 @@ export default function ProductForm() {
     priceBrandNew: '',
     priceUkUsed: '',
     hasVariants: false,
-    variants: []
+    variants: [],
+    folder: ''
   });
   const [categories, setCategories] = useState([]);
   const [allSubcategories, setAllSubcategories] = useState([]);
@@ -243,6 +244,7 @@ export default function ProductForm() {
         is_hidden: Boolean(formData.is_hidden),
         subcategory: formData.subcategory || '',
         specifications: formData.specifications || {},
+        folder: formData.folder || '',
         updatedAt: new Date()
       };
 
@@ -481,7 +483,9 @@ export default function ProductForm() {
                   onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
                 />
               </FieldGroup>
+            </div>
 
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
               <FieldGroup label="Product Tag" icon={<Sparkles size={14} />} accent="#ec4899">
                 <div style={{ position: 'relative' }}>
                   <select
@@ -503,6 +507,25 @@ export default function ProductForm() {
                     <option value="Budget Pick">Budget Pick</option>
                     <option value="Hot Sale">Hot Sale</option>
                     <option value="Clearance">Clearance</option>
+                  </select>
+                  <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }}>▾</div>
+                </div>
+              </FieldGroup>
+
+              <FieldGroup label="Product Folder" icon={<Tag size={14} />} accent="#f59e0b">
+                <div style={{ position: 'relative' }}>
+                  <select
+                    name="folder" value={formData.folder || ''} onChange={handleChange}
+                    style={{
+                      ...inputStyle,
+                      paddingLeft: 16, cursor: 'pointer',
+                      appearance: 'none'
+                    }}
+                    onFocus={e => { e.target.style.borderColor = '#f59e0b'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.12)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                  >
+                    <option value="">None</option>
+                    <option value="Good Mood Deals">Good Mood Deals</option>
                   </select>
                   <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }}>▾</div>
                 </div>
