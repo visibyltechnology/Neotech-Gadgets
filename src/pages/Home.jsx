@@ -229,7 +229,7 @@ export default function Home() {
                         <div className="deal-banner-top">
                             <div className="deal-meta">
                                 <span className="deal-label"><i className="fa-solid fa-bolt"></i> Flash Deal of the Day</span>
-                                <h2 className="deal-title">Good Mood Deals</h2>
+                                <Link to="/good-mood-deals" style={{ textDecoration: 'none' }}><h2 className="deal-title">Good Mood Deals</h2></Link>
                             </div>
 
                             <div className="deal-timer" aria-label="Countdown timer">
@@ -247,8 +247,8 @@ export default function Home() {
                                 </div>
                             </div>
 
-                            <Link to="/products?folder=Good+Mood+Deals" className="btn-primary" style={{ flexShrink: 0, padding: '0.85rem 1.75rem', fontSize: '0.85rem' }}>
-                                Grab Deal <i className="fa-solid fa-arrow-right"></i>
+                            <Link to="/good-mood-deals" className="btn-primary" style={{ flexShrink: 0, padding: '0.85rem 1.75rem', fontSize: '0.85rem' }}>
+                                View All Deals <i className="fa-solid fa-arrow-right"></i>
                             </Link>
                         </div>
 

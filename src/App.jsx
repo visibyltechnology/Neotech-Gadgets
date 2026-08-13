@@ -23,6 +23,7 @@ const DeliveryPortal= lazy(() => import('./pages/DeliveryPortal'));
 const Terms          = lazy(() => import('./pages/Terms'));
 const PrivacyPolicy  = lazy(() => import('./pages/PrivacyPolicy'));
 const SwapPage       = lazy(() => import('./pages/Swap'));
+const GoodMoodDeals  = lazy(() => import('./pages/GoodMoodDeals'));
 
 const AdminLayout      = lazy(() => import('./pages/Admin/AdminLayout'));
 const ProductManager   = lazy(() => import('./pages/Admin/ProductManager'));
@@ -231,6 +232,7 @@ function App() {
           <Route path="/products"       element={<Shop />} />
           <Route path="/products/:id"   element={<ProductDetail />} />
           <Route path="/shop"           element={<Shop />} />
+          <Route path="/good-mood-deals" element={<GoodMoodDeals />} />
 
           {/* Electronics category routes */}
           <Route path="/phones"         element={<Shop />} />

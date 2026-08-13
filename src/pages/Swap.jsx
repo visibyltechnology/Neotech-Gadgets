@@ -241,8 +241,8 @@ export default function SwapPage() {
       setContactInfo(prev => ({ ...prev, fullName: user.displayName || '' }));
     }
   }, [user]);
-  const [idCardFile, setIdCardFile] = useState(null);
-  const [receiptFile, setReceiptFile] = useState(null);
+  const [identityFile, setIdentityFile] = useState(null);
+  const [identityType, setIdentityType] = useState('idCard'); // 'idCard' or 'receipt'
 
   useEffect(() => {
     const unsub = listenToTradeInDevices(data => {
@@ -403,7 +403,7 @@ export default function SwapPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!contactInfo.phone || !contactInfo.location) return toast.error('Please provide phone and location');
-    if (!idCardFile) return toast.error('Government ID is required for verification');
+    if (!identityFile) return toast.error('An identity document (ID or Receipt) is required for verification');
 
     setSubmitting(true);
     try {
@@ -412,9 +412,10 @@ export default function SwapPage() {
       let receiptUrl = '';
       
       try {
-        idCardUrl = await uploadSwapDocument(idCardFile, user.uid, 'id_card');
-        if (receiptFile) {
-          receiptUrl = await uploadSwapDocument(receiptFile, user.uid, 'receipt');
+        if (identityType === 'idCard') {
+          idCardUrl = await uploadSwapDocument(identityFile, user.uid, 'id_card');
+        } else {
+          receiptUrl = await uploadSwapDocument(identityFile, user.uid, 'receipt');
         }
       } catch (uploadErr) {
         toast.error(uploadErr.message || "Failed to upload documents.");
@@ -973,49 +974,63 @@ export default function SwapPage() {
                     
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-bold text-white mb-2">Upload Government ID <span className="text-brandRed">*</span></label>
-                        <p className="text-xs text-gray-500 mb-3">Passport, Driver's License, or National ID</p>
-                        <div className="relative border-2 border-dashed border-gray-600 rounded-xl p-6 text-center hover:bg-gray-700/50 transition-colors">
-                          <input 
-                            type="file" 
-                            accept="image/*"
-                            required
-                            onChange={(e) => setIdCardFile(e.target.files[0])}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
-                          {idCardFile ? (
-                            <div className="flex flex-col items-center">
-                              <CheckCircle2 className="text-green-500 mb-2" size={32} />
-                              <p className="text-green-500 font-bold">{idCardFile.name}</p>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center">
-                              <CreditCard className="text-gray-400 mb-2" size={32} />
-                              <p className="text-gray-300 font-bold">Click or drag ID image here</p>
-                            </div>
-                          )}
+                        <label className="block text-sm font-bold text-white mb-2">Upload Identity Document <span className="text-brandRed">*</span></label>
+                        <p className="text-xs text-gray-500 mb-3">Provide either a valid government-issued ID card or the product receipt.</p>
+                        
+                        <div className="flex gap-6 mb-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="radio" 
+                              name="idType" 
+                              value="idCard" 
+                              checked={identityType === 'idCard'} 
+                              onChange={(e) => {
+                                setIdentityType(e.target.value);
+                                setIdentityFile(null);
+                              }} 
+                              className="accent-brandRed"
+                            />
+                            <span className="text-sm font-bold text-gray-300">Government ID Card</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="radio" 
+                              name="idType" 
+                              value="receipt" 
+                              checked={identityType === 'receipt'} 
+                              onChange={(e) => {
+                                setIdentityType(e.target.value);
+                                setIdentityFile(null);
+                              }} 
+                              className="accent-brandRed"
+                            />
+                            <span className="text-sm font-bold text-gray-300">Product Receipt</span>
+                          </label>
                         </div>
-                      </div>
 
-                      <div>
-                        <label className="block text-sm font-bold text-white mb-2">Upload Product Receipt or Govt ID (Optional)</label>
-                        <p className="text-xs text-gray-500 mb-3">Providing a receipt or government-issued ID card increases your quotation value.</p>
                         <div className="relative border-2 border-dashed border-gray-600 rounded-xl p-6 text-center hover:bg-gray-700/50 transition-colors">
                           <input 
                             type="file" 
-                            accept="image/*,.pdf"
-                            onChange={(e) => setReceiptFile(e.target.files[0])}
+                            accept={identityType === 'idCard' ? "image/*" : "image/*,.pdf"}
+                            required
+                            onChange={(e) => setIdentityFile(e.target.files[0])}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                           />
-                          {receiptFile ? (
+                          {identityFile ? (
                             <div className="flex flex-col items-center">
                               <CheckCircle2 className="text-green-500 mb-2" size={32} />
-                              <p className="text-green-500 font-bold">{receiptFile.name}</p>
+                              <p className="text-green-500 font-bold">{identityFile.name}</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center">
-                              <FileText className="text-gray-400 mb-2" size={32} />
-                              <p className="text-gray-300 font-bold">Click or drag receipt/ID here</p>
+                              {identityType === 'idCard' ? (
+                                <CreditCard className="text-gray-400 mb-2" size={32} />
+                              ) : (
+                                <FileText className="text-gray-400 mb-2" size={32} />
+                              )}
+                              <p className="text-gray-300 font-bold">
+                                Click or drag {identityType === 'idCard' ? 'ID image' : 'receipt/PDF'} here
+                              </p>
                             </div>
                           )}
                         </div>
