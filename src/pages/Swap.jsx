@@ -470,7 +470,7 @@ export default function SwapPage() {
       try {
         await createNotification(user.uid, NOTIFICATION_TYPES.SWAP_UPDATE, {
           title: 'Swap Request Submitted',
-          message: `Your ${intent} request (${newRefId}) has been successfully submitted and is under review.`,
+          message: `Your ${intent} request (${newRefId}) has been successfully submitted! Our team is currently reviewing your device details. We will notify you with a final quotation and further instructions on how to proceed shortly.`,
           referenceId: newRefId,
           status: 'pending',
           link: '/profile'
@@ -998,8 +998,8 @@ export default function SwapPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-white mb-2">Upload Product Receipt (Optional)</label>
-                        <p className="text-xs text-gray-500 mb-3">Providing a receipt increases your quotation value.</p>
+                        <label className="block text-sm font-bold text-white mb-2">Upload Product Receipt or Govt ID (Optional)</label>
+                        <p className="text-xs text-gray-500 mb-3">Providing a receipt or government-issued ID card increases your quotation value.</p>
                         <div className="relative border-2 border-dashed border-gray-600 rounded-xl p-6 text-center hover:bg-gray-700/50 transition-colors">
                           <input 
                             type="file" 
@@ -1015,7 +1015,7 @@ export default function SwapPage() {
                           ) : (
                             <div className="flex flex-col items-center">
                               <FileText className="text-gray-400 mb-2" size={32} />
-                              <p className="text-gray-300 font-bold">Click or drag receipt here</p>
+                              <p className="text-gray-300 font-bold">Click or drag receipt/ID here</p>
                             </div>
                           )}
                         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import {
@@ -17,6 +17,8 @@ import toast from 'react-hot-toast';
 
 export default function ProductForm() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const isGoodMoodDeal = searchParams.get('goodMoodDeal') === 'true';
   const navigate = useNavigate();
   const isEditing = !!id;
   const fileInputRef = useRef(null);
@@ -47,7 +49,7 @@ export default function ProductForm() {
     priceUkUsed: '',
     hasVariants: false,
     variants: [],
-    folder: ''
+    folder: isGoodMoodDeal ? 'Good Mood Deals' : ''
   });
   const [categories, setCategories] = useState([]);
   const [allSubcategories, setAllSubcategories] = useState([]);
@@ -241,10 +243,11 @@ export default function ProductForm() {
         items_left: Number(formData.items_left || 0),
         unlimited_stock: formData.unlimited_stock || false,
         inventory_status: formData.unlimited_stock ? 'in_stock' : (Number(formData.items_left || 0) === 0 ? 'out_of_stock' : (formData.inventory_status || 'in_stock')),
-        is_hidden: Boolean(formData.is_hidden),
+        is_hidden: isGoodMoodDeal ? true : Boolean(formData.is_hidden),
+        dealOnly: isGoodMoodDeal ? true : (formData.dealOnly || false),
         subcategory: formData.subcategory || '',
         specifications: formData.specifications || {},
-        folder: formData.folder || '',
+        folder: isGoodMoodDeal ? 'Good Mood Deals' : (formData.folder || ''),
         updatedAt: new Date()
       };
 
@@ -255,9 +258,9 @@ export default function ProductForm() {
         const newRef = doc(collection(db, 'products'));
         payload.createdAt = new Date();
         await setDoc(newRef, payload);
-        toast.success('Product created successfully!');
+        toast.success(isGoodMoodDeal ? 'Deal-only product created!' : 'Product created successfully!');
       }
-      navigate('/admin');
+      navigate(isGoodMoodDeal ? '/admin/good-mood' : '/admin');
     } catch (err) {
       if (err.message?.toLowerCase().includes('offline')) {
         setError('Please check your internet connection and try again.');
@@ -330,7 +333,7 @@ export default function ProductForm() {
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {/* Back link */}
       <Link
-        to="/admin"
+        to={isGoodMoodDeal ? '/admin/good-mood' : '/admin'}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
           fontSize: 12, fontWeight: 700, color: '#6b7280',
@@ -340,8 +343,23 @@ export default function ProductForm() {
         onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
         onMouseLeave={e => e.currentTarget.style.color = '#6b7280'}
       >
-        <ArrowLeft size={15} /> Back to Products
+        <ArrowLeft size={15} /> {isGoodMoodDeal ? 'Back to Good Mood Deals' : 'Back to Products'}
       </Link>
+
+      {isGoodMoodDeal && (
+        <div style={{
+          background: 'linear-gradient(135deg, #7c3aed11, #7c3aed22)',
+          border: '2px solid #7c3aed44',
+          borderRadius: 12, padding: '12px 18px',
+          marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10
+        }}>
+          <span style={{ fontSize: 20 }}>🔥</span>
+          <div>
+            <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Deal-Only Product Mode</p>
+            <p style={{ margin: 0, fontSize: 12, color: '#6b21a8', fontWeight: 500 }}>This product will ONLY appear in the Good Mood Deals banner — not in the main store catalogue.</p>
+          </div>
+        </div>
+      )}
 
       {/* Card */}
       <div style={{
@@ -360,13 +378,13 @@ export default function ProductForm() {
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <Sparkles size={18} color="#f59e0b" />
-              <span style={{ color: '#f59e0b', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-                Product Management
+              <Sparkles size={18} color={isGoodMoodDeal ? '#a855f7' : '#f59e0b'} />
+              <span style={{ color: isGoodMoodDeal ? '#a855f7' : '#f59e0b', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                {isGoodMoodDeal ? '🔥 Good Mood Deals' : 'Product Management'}
               </span>
             </div>
             <h1 style={{ margin: 0, color: '#fff', fontSize: 26, fontWeight: 900, letterSpacing: '-0.02em' }}>
-              {isEditing ? '✏️ Edit Product' : '✨ Add New Product'}
+              {isEditing ? '✏️ Edit Product' : isGoodMoodDeal ? '🏷️ New Deal-Only Product' : '✨ Add New Product'}
             </h1>
           </div>
           {productImages.length > 0 && (

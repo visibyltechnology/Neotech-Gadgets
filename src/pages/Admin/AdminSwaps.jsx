@@ -33,7 +33,7 @@ export default function AdminSwaps() {
       if (selectedSwap.userId) {
         await createNotification(selectedSwap.userId, NOTIFICATION_TYPES.SWAP_UPDATE, {
           title: 'Quotation Updated',
-          message: `Your ${selectedSwap.intent} request (${selectedSwap.referenceId}) has received a new quotation of ₦${numericAmount.toLocaleString()}.`,
+          message: `Your ${selectedSwap.intent} request (${selectedSwap.referenceId}) has received a new quotation of ₦${numericAmount.toLocaleString()}. Please visit your profile to accept the quotation and proceed to checkout, or decline it.`,
           referenceId: selectedSwap.referenceId,
           status: selectedSwap.status,
           link: '/profile'
@@ -76,7 +76,15 @@ export default function AdminSwaps() {
       // Notify the user
       if (userId) {
         const title = `Swap Request Updated`;
-        const message = `Your swap request (${referenceId}) is now ${newStatus}.`;
+        let message = `Your swap request (${referenceId}) is now ${newStatus}.`;
+        
+        if (newStatus === 'accepted' || newStatus === 'approved') {
+          message += ' Please visit your profile to proceed with checkout and finalize your swap.';
+        } else if (newStatus === 'rejected') {
+          message += ' Unfortunately, we cannot proceed with your request at this time. Please contact support for more details.';
+        } else if (newStatus === 'pending') {
+          message += ' We are currently reviewing your request and will get back to you soon.';
+        }
         await createNotification(userId, NOTIFICATION_TYPES.SWAP_UPDATE, {
           title,
           message,

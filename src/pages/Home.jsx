@@ -54,6 +54,8 @@ export default function Home() {
         return () => clearInterval(id);
     }, [dealEndTime]);
     const pad = n => String(n).padStart(2, '0');
+    // True only when a timer is set AND hasn't expired yet
+    const dealActive = !!(dealEndTime && dealEndTime > Date.now());
 
     // ── Data Fetching ──
     useEffect(() => {
@@ -106,9 +108,7 @@ export default function Home() {
                 setGoodMoodLoading(true);
                 const q = query(
                     collection(db, 'products'),
-                    where('folder', '==', 'Good Mood Deals'),
-                    where('is_hidden', '==', false),
-                    limit(8)
+                    where('folder', '==', 'Good Mood Deals')
                 );
                 const snap = await getDocs(q);
                 setGoodMoodDeals(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -221,59 +221,74 @@ export default function Home() {
                     </section>
 
                     {/* ====================================================
-                        DEAL BANNER — Good Mood Deals
+                        DEAL BANNER — Good Mood Deals (only shown when timer is active)
                     ==================================================== */}
+                    {dealActive && (
                     <div className="deal-banner fade-in-up" role="region" aria-label="Flash deal">
                         <div className="deal-banner-glow"></div>
-                        <div className="deal-meta">
-                            <span className="deal-label"><i className="fa-solid fa-bolt"></i> Flash Deal of the Day</span>
-                            <h2 className="deal-title">Good Mood Deals</h2>
-                        </div>
-
-                        <div className="deal-timer" aria-label="Countdown timer">
-                            <div className="timer-block">
-                                <span className="timer-num">{pad(time.h)}</span>
-                                <span className="timer-label">Hours</span>
+                        <div className="deal-banner-top">
+                            <div className="deal-meta">
+                                <span className="deal-label"><i className="fa-solid fa-bolt"></i> Flash Deal of the Day</span>
+                                <h2 className="deal-title">Good Mood Deals</h2>
                             </div>
-                            <div className="timer-block">
-                                <span className="timer-num">{pad(time.m)}</span>
-                                <span className="timer-label">Mins</span>
-                            </div>
-                            <div className="timer-block">
-                                <span className="timer-num">{pad(time.s)}</span>
-                                <span className="timer-label">Secs</span>
-                            </div>
-                        </div>
 
-                        <Link to="/products?folder=Good+Mood+Deals" className="btn-primary" style={{ flexShrink: 0, padding: '0.85rem 1.75rem', fontSize: '0.85rem' }}>
-                            Grab Deal <i className="fa-solid fa-arrow-right"></i>
-                        </Link>
-                    </div>
-
-                    {/* Good Mood Deals Product Grid */}
-                    {(goodMoodLoading || goodMoodDeals.length > 0) && (
-                        <section aria-labelledby="good-mood-title" className="fade-in-up delay-1">
-                            <div className="section-header">
-                                <div className="section-label">
-                                    <div className="section-bar" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}></div>
-                                    <h2 className="section-title" id="good-mood-title">🔥 Good Mood Deals</h2>
+                            <div className="deal-timer" aria-label="Countdown timer">
+                                <div className="timer-block">
+                                    <span className="timer-num">{pad(time.h)}</span>
+                                    <span className="timer-label">Hours</span>
                                 </div>
-                                <Link to="/products?folder=Good+Mood+Deals" className="section-link">View All <i className="fa-solid fa-chevron-right"></i></Link>
+                                <div className="timer-block">
+                                    <span className="timer-num">{pad(time.m)}</span>
+                                    <span className="timer-label">Mins</span>
+                                </div>
+                                <div className="timer-block">
+                                    <span className="timer-num">{pad(time.s)}</span>
+                                    <span className="timer-label">Secs</span>
+                                </div>
                             </div>
-                            <div className="products-grid">
+
+                            <Link to="/products?folder=Good+Mood+Deals" className="btn-primary" style={{ flexShrink: 0, padding: '0.85rem 1.75rem', fontSize: '0.85rem' }}>
+                                Grab Deal <i className="fa-solid fa-arrow-right"></i>
+                            </Link>
+                        </div>
+
+                        {/* Horizontally scrollable product row inside the banner */}
+                        {(goodMoodLoading || goodMoodDeals.length > 0) && (
+                            <div className="deal-products-scroll">
                                 {goodMoodLoading
-                                    ? [1, 2, 3, 4].map(i => <SkeletonCard key={i} />)
+                                    ? [1, 2, 3, 4].map(i => <div key={i} className="deal-product-skeleton" />)
                                     : goodMoodDeals.map((product, idx) => (
-                                        <ProductCard
+                                        <div
                                             key={product.id}
-                                            product={product}
-                                            tagLabel={idx === 0 ? '🔥 Deal' : idx === 1 ? '⚡ Hot' : null}
+                                            className="deal-product-card"
                                             onClick={() => navigate(`/products/${product.id}`)}
-                                        />
+                                        >
+                                            <div className="deal-product-img">
+                                                <img
+                                                    src={product.img || product.images?.[0] || 'https://via.placeholder.com/300'}
+                                                    alt={product.name}
+                                                    loading="lazy"
+                                                />
+                                                {idx === 0 && <span className="deal-product-badge">🔥 Top Deal</span>}
+                                                {idx === 1 && <span className="deal-product-badge" style={{ background: 'rgba(239,68,68,0.85)' }}>⚡ Hot</span>}
+                                            </div>
+                                            <div className="deal-product-info">
+                                                <p className="deal-product-name">{product.name}</p>
+                                                {product.pss && dealActive && Number(product.pss) < Number(product.price) && (
+                                                    <p className="deal-product-old">₦{Number(product.price).toLocaleString()}</p>
+                                                )}
+                                                <p className="deal-product-price">
+                                                    ₦{Number(
+                                                        product.pss && dealActive && Number(product.pss) > 0 ? product.pss : product.price
+                                                    ).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
                                     ))
                                 }
                             </div>
-                        </section>
+                        )}
+                    </div>
                     )}
 
                     {/* ====================================================

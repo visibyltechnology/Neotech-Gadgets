@@ -36,6 +36,7 @@ const AdminUsers       = lazy(() => import('./pages/Admin/AdminUsers'));
 const AdminSwaps       = lazy(() => import('./pages/Admin/AdminSwaps'));
 const TradeInManager   = lazy(() => import('./pages/Admin/TradeInManager'));
 const SiteSettings     = lazy(() => import('./pages/Admin/SiteSettings'));
+const AdminGoodMood    = lazy(() => import('./pages/Admin/AdminGoodMood'));
 
 /* ─── Page-level Suspense mini-loader ─── */
 const Loader = () => (
@@ -265,6 +266,7 @@ function App() {
             <Route path="trade-ins"   element={<TradeInManager />} />
             <Route path="users"       element={<AdminUsers />} />
             <Route path="settings"    element={<SiteSettings />} />
+            <Route path="good-mood"   element={<AdminGoodMood />} />
           </Route>
         </Routes>
       </Suspense>
