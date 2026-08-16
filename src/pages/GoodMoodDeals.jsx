@@ -1,44 +1,13 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Footer from '../components/Footer';
 
 export default function GoodMoodDeals() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [dealEndTime, setDealEndTime] = useState(null);
-    const [time, setTime] = useState({ h: 0, m: 0, s: 0 });
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const snap = await getDoc(doc(db, 'site_settings', 'general'));
-                if (snap.exists() && snap.data().goodMoodDealsEnd) {
-                    setDealEndTime(new Date(snap.data().goodMoodDealsEnd).getTime());
-                }
-            } catch (err) {
-                console.error("Failed to fetch settings:", err);
-            }
-        };
-        fetchSettings();
-    }, []);
-
-    useEffect(() => {
-        if (!dealEndTime) return;
-        const id = setInterval(() => {
-            const diff = Math.max(0, dealEndTime - Date.now());
-            setTime({
-                h: Math.floor(diff / 3600000),
-                m: Math.floor((diff % 3600000) / 60000),
-                s: Math.floor((diff % 60000) / 1000),
-            });
-        }, 1000);
-        return () => clearInterval(id);
-    }, [dealEndTime]);
-    const pad = n => String(n).padStart(2, '0');
-    const dealActive = !!(dealEndTime && dealEndTime > Date.now());
 
     useEffect(() => {
         setLoading(true);
@@ -73,21 +42,6 @@ export default function GoodMoodDeals() {
                     </div>
                     
                     <h1 style={{ color: '#fff', fontSize: '3rem', fontWeight: 900, margin: '0 0 1rem 0', letterSpacing: '-0.03em' }}>Good Mood Deals</h1>
-                    
-                    {dealActive ? (
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', padding: '1rem 2rem', borderRadius: '1rem', border: '1px solid #333' }}>
-                            <Clock className="text-brandRed" size={24} />
-                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>
-                                <span>{pad(time.h)}</span><span style={{ color: '#555' }}>:</span>
-                                <span>{pad(time.m)}</span><span style={{ color: '#555' }}>:</span>
-                                <span>{pad(time.s)}</span>
-                            </div>
-                        </div>
-                    ) : (
-                        <div style={{ color: '#FF6060', fontWeight: 700, padding: '1rem', background: 'rgba(212,43,43,0.1)', borderRadius: '0.5rem' }}>
-                            These deals have expired. Check back later!
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -143,13 +97,13 @@ export default function GoodMoodDeals() {
                                         {product.name}
                                     </h3>
                                     <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        {product.pss && dealActive && Number(product.pss) < Number(product.price) && (
+                                        {product.pss && Number(product.pss) < Number(product.price) && (
                                             <span style={{ color: '#888', textDecoration: 'line-through', fontSize: '0.85rem' }}>
                                                 ₦{Number(product.price).toLocaleString()}
                                             </span>
                                         )}
                                         <span style={{ color: '#FF3030', fontSize: '1.25rem', fontWeight: 800 }}>
-                                            ₦{Number(product.pss && dealActive && Number(product.pss) > 0 ? product.pss : product.price).toLocaleString()}
+                                            ₦{Number(product.pss && Number(product.pss) > 0 ? product.pss : product.price).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>

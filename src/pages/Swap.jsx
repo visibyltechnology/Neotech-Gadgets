@@ -352,6 +352,7 @@ export default function SwapPage() {
       }
       if (numDevices < 1 || numDevices > 5) return toast.error("Invalid number of devices");
       setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (step === 2) {
       // Validate all devices
       for (let i = 0; i < devices.length; i++) {
@@ -360,6 +361,7 @@ export default function SwapPage() {
         if (!d.condition) return toast.error(`Please select a condition for Device ${i + 1}`);
       }
       setStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -943,7 +945,7 @@ export default function SwapPage() {
             {step === 2 && (
               <div>
                 <div className="mb-6 flex items-center justify-between">
-                  <button onClick={() => setStep(1)} className="text-gray-400 hover:text-white flex items-center gap-1 font-bold text-sm uppercase tracking-wider"><ArrowLeft size={16}/> Back</button>
+                  <button onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-gray-400 hover:text-white flex items-center gap-1 font-bold text-sm uppercase tracking-wider"><ArrowLeft size={16}/> Back</button>
                   <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Step 2 of 3</p>
                 </div>
 
@@ -959,7 +961,7 @@ export default function SwapPage() {
             {step === 3 && (
               <div>
                 <div className="mb-6 flex items-center justify-between">
-                  <button onClick={() => setStep(2)} className="text-gray-400 hover:text-white flex items-center gap-1 font-bold text-sm uppercase tracking-wider"><ArrowLeft size={16}/> Back</button>
+                  <button onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-gray-400 hover:text-white flex items-center gap-1 font-bold text-sm uppercase tracking-wider"><ArrowLeft size={16}/> Back</button>
                   <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Step 3 of 3</p>
                 </div>
                 
