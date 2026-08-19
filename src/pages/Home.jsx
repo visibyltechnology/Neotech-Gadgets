@@ -23,40 +23,6 @@ export default function Home() {
     const [newsletterSent, setNewsletterSent] = useState(false);
     const navigate = useNavigate();
 
-    // ── Deal Countdown Timer ──
-    const [time, setTime] = useState({ h: 0, m: 0, s: 0 });
-    const [dealEndTime, setDealEndTime] = useState(null);
-
-    useEffect(() => {
-        const fetchTimer = async () => {
-            try {
-                const docSnap = await getDoc(doc(db, 'settings', 'site_settings'));
-                if (docSnap.exists() && docSnap.data().goodMoodDealsEnd) {
-                    setDealEndTime(new Date(docSnap.data().goodMoodDealsEnd).getTime());
-                }
-            } catch (err) {
-                console.error('Timer fetch error:', err);
-            }
-        };
-        fetchTimer();
-    }, []);
-
-    useEffect(() => {
-        if (!dealEndTime) return;
-        const id = setInterval(() => {
-            const diff = Math.max(0, dealEndTime - Date.now());
-            setTime({
-                h: Math.floor(diff / 3600000),
-                m: Math.floor((diff % 3600000) / 60000),
-                s: Math.floor((diff % 60000) / 1000),
-            });
-        }, 1000);
-        return () => clearInterval(id);
-    }, [dealEndTime]);
-    const pad = n => String(n).padStart(2, '0');
-    // True only when a timer is set AND hasn't expired yet
-    const dealActive = !!(dealEndTime && dealEndTime > Date.now());
-
     // ── Data Fetching ──
     useEffect(() => {
         const fetchData = async () => {
@@ -221,30 +187,15 @@ export default function Home() {
                     </section>
 
                     {/* ====================================================
-                        DEAL BANNER — Good Mood Deals (only shown when timer is active)
+                        DEAL BANNER — Good Mood Deals
                     ==================================================== */}
-                    {dealActive && (
+                    {goodMoodDeals.length > 0 && (
                     <div className="deal-banner fade-in-up" role="region" aria-label="Flash deal">
                         <div className="deal-banner-glow"></div>
                         <div className="deal-banner-top">
                             <div className="deal-meta">
                                 <span className="deal-label"><i className="fa-solid fa-bolt"></i> Flash Deal of the Day</span>
                                 <Link to="/good-mood-deals" style={{ textDecoration: 'none' }}><h2 className="deal-title">Good Mood Deals</h2></Link>
-                            </div>
-
-                            <div className="deal-timer" aria-label="Countdown timer">
-                                <div className="timer-block">
-                                    <span className="timer-num">{pad(time.h)}</span>
-                                    <span className="timer-label">Hours</span>
-                                </div>
-                                <div className="timer-block">
-                                    <span className="timer-num">{pad(time.m)}</span>
-                                    <span className="timer-label">Mins</span>
-                                </div>
-                                <div className="timer-block">
-                                    <span className="timer-num">{pad(time.s)}</span>
-                                    <span className="timer-label">Secs</span>
-                                </div>
                             </div>
 
                             <Link to="/good-mood-deals" className="btn-primary" style={{ flexShrink: 0, padding: '0.85rem 1.75rem', fontSize: '0.85rem' }}>
@@ -274,12 +225,12 @@ export default function Home() {
                                             </div>
                                             <div className="deal-product-info">
                                                 <p className="deal-product-name">{product.name}</p>
-                                                {product.pss && dealActive && Number(product.pss) < Number(product.price) && (
+                                                {product.pss && Number(product.pss) < Number(product.price) && (
                                                     <p className="deal-product-old">₦{Number(product.price).toLocaleString()}</p>
                                                 )}
                                                 <p className="deal-product-price">
                                                     ₦{Number(
-                                                        product.pss && dealActive && Number(product.pss) > 0 ? product.pss : product.price
+                                                        product.pss && Number(product.pss) > 0 ? product.pss : product.price
                                                     ).toLocaleString()}
                                                 </p>
                                             </div>

@@ -3,14 +3,11 @@ import { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc } from '
 import { db } from '../../firebase';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Save, Trash2, Flame, Search, Plus, X, Package, ExternalLink } from 'lucide-react';
+import { Trash2, Flame, Search, Plus, X, Package, ExternalLink } from 'lucide-react';
 
 export default function AdminGoodMood() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    
-    // Good Mood Deals end time (ISO string stored in Firestore)
-    const [goodMoodDealsEnd, setGoodMoodDealsEnd] = useState('');
 
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -19,13 +16,7 @@ export default function AdminGoodMood() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Timer settings
-                const docRef = doc(db, 'settings', 'site_settings');
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.goodMoodDealsEnd) setGoodMoodDealsEnd(data.goodMoodDealsEnd);
-                }
+                // Removed Timer settings fetch
 
                 // Fetch Products
                 const pSnap = await getDocs(collection(db, 'products'));
@@ -39,21 +30,6 @@ export default function AdminGoodMood() {
         };
         fetchData();
     }, []);
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            await setDoc(doc(db, 'settings', 'site_settings'), {
-                goodMoodDealsEnd: goodMoodDealsEnd || ''
-            }, { merge: true });
-            toast.success("Good Mood Deals settings saved successfully!");
-        } catch (error) {
-            console.error("Error saving settings:", error);
-            toast.error("Failed to save settings.");
-        } finally {
-            setSaving(false);
-        }
-    };
 
     const toggleProductFolder = async (productId, add) => {
         try {
@@ -111,61 +87,13 @@ export default function AdminGoodMood() {
                     <h1 className="text-2xl font-black font-display uppercase tracking-wider text-gray-900 flex items-center gap-3">
                         <Flame className="text-amber-500" /> Good Mood Deals
                     </h1>
-                    <p className="text-gray-500 text-sm font-medium mt-1">Manage the countdown timer and select products for the Flash Deals section.</p>
+                    <p className="text-gray-500 text-sm font-medium mt-1">Select products for the Flash Deals section.</p>
                 </div>
-                <button 
-                    onClick={handleSave} 
-                    disabled={saving}
-                    className="bg-brandDark hover:bg-brandBlack text-brandLime font-black py-3 px-6 rounded-xl text-sm uppercase tracking-widest transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
-                >
-                    {saving ? (
-                        <><i className="fas fa-circle-notch fa-spin"></i> Saving...</>
-                    ) : (
-                        <><Save size={18} /> Save Timer</>
-                    )}
-                </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Timer Section */}
-                <div className="bg-white p-8 rounded-sm shadow-sm border border-amber-200 self-start">
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8 border-b border-gray-100 pb-6">
-                        <span className="text-4xl">🔥</span>
-                        <div>
-                            <h3 className="text-lg font-black text-gray-800 uppercase tracking-widest">Countdown Timer</h3>
-                            <p className="text-sm text-gray-500 font-medium mt-1">Set the exact date and time when the flash deals will expire. The homepage banner will automatically count down to this moment.</p>
-                        </div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-4">
-                        <div className="flex-1 w-full">
-                            <label className="block text-sm font-bold text-gray-700 uppercase tracking-widest mb-3">Deal End Date & Time</label>
-                            <input
-                                type="datetime-local"
-                                value={goodMoodDealsEnd}
-                                onChange={e => setGoodMoodDealsEnd(e.target.value)}
-                                min={new Date().toISOString().slice(0, 16)}
-                                className="w-full border-2 border-gray-200 rounded-sm px-4 py-4 text-base font-medium text-gray-800 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-200 transition-all"
-                            />
-                        </div>
-                        {goodMoodDealsEnd && (
-                            <div className="bg-amber-50 border-2 border-amber-200 rounded-sm px-6 py-4 text-sm font-bold text-amber-700 flex-shrink-0">
-                                ⏱ Ends: {new Date(goodMoodDealsEnd).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}
-                            </div>
-                        )}
-                        {goodMoodDealsEnd && (
-                            <button
-                                onClick={() => setGoodMoodDealsEnd('')}
-                                className="text-sm font-bold text-red-500 hover:text-red-700 uppercase tracking-wider flex-shrink-0 flex items-center justify-center gap-2 h-12 px-4 hover:bg-red-50 rounded-sm transition-colors mt-2 border border-red-100"
-                            >
-                                <Trash2 size={16} /> Clear Timer
-                            </button>
-                        )}
-                    </div>
-                </div>
-
                 {/* Product Selection Section */}
-                <div className="bg-white p-8 rounded-sm shadow-sm border border-blue-200 self-start">
+                <div className="bg-white p-8 rounded-sm shadow-sm border border-blue-200 self-start lg:col-span-2">
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 border-b border-gray-100 pb-6">
                         <span className="text-4xl">🏷️</span>
                         <div>
