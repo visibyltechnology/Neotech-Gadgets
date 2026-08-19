@@ -120,7 +120,10 @@ export default function Register() {
       sessionStorage.setItem('otpExpiresAt', otpExpiresAt);
 
       try {
-        await sendRegistrationOTPEmail(formData.email, formData.firstName, otpCode);
+        const sent = await sendRegistrationOTPEmail(formData.email, formData.firstName, otpCode);
+        if (!sent) {
+          throw new Error('Failed to send OTP via EmailJS.');
+        }
         toast.success('OTP sent! Check your email inbox (and spam folder).');
       } catch (emailErr) {
         console.error("EmailJS error:", emailErr);
