@@ -41,8 +41,8 @@ export default function VerifyOTP() {
   }, [stopTimer]);
 
   useEffect(() => {
-    const dataStr = sessionStorage.getItem('pendingRegistration');
-    const otpExpStr = sessionStorage.getItem('otpExpiresAt');
+    const dataStr = localStorage.getItem('pendingRegistration');
+    const otpExpStr = localStorage.getItem('otpExpiresAt');
     if (!email || !dataStr || !otpExpStr) {
       toast.error('Session expired or invalid. Please register again.');
       navigate('/register');
@@ -97,8 +97,8 @@ export default function VerifyOTP() {
     setLoading(true);
     setError('');
     try {
-      const storedOTP = sessionStorage.getItem('registrationOTP')?.trim();
-      const dataStr = sessionStorage.getItem('pendingRegistration');
+      const storedOTP = localStorage.getItem('registrationOTP')?.trim();
+      const dataStr = localStorage.getItem('pendingRegistration');
       if (!storedOTP || !dataStr) {
         toast.error('Session expired. Please register again.');
         navigate('/register');
@@ -120,9 +120,9 @@ export default function VerifyOTP() {
         if (authErr.code === 'auth/email-already-in-use') {
           // The email was registered between the check and OTP verification.
           // Clean up session and send user back to register with a clear message.
-          sessionStorage.removeItem('pendingRegistration');
-          sessionStorage.removeItem('registrationOTP');
-          sessionStorage.removeItem('otpExpiresAt');
+          localStorage.removeItem('pendingRegistration');
+          localStorage.removeItem('registrationOTP');
+          localStorage.removeItem('otpExpiresAt');
           setError('This email is already registered. Please go to the Login page to sign in or reset your password.');
           toast.error('Email already registered. Please log in instead.');
           setLoading(false);
@@ -136,9 +136,9 @@ export default function VerifyOTP() {
         firstName: pendingData.firstName, lastName: pendingData.lastName, phone: pendingData.phone,
         email: pendingData.email, isAdmin: false, isEmailVerified: true, createdAt: new Date().toISOString()
       }, { merge: true });
-      sessionStorage.removeItem('pendingRegistration');
-      sessionStorage.removeItem('registrationOTP');
-      sessionStorage.removeItem('otpExpiresAt');
+      localStorage.removeItem('pendingRegistration');
+      localStorage.removeItem('registrationOTP');
+      localStorage.removeItem('otpExpiresAt');
       toast.success('Account successfully created and verified!');
       window.location.href = '/';
     } catch (err) {
@@ -158,13 +158,13 @@ export default function VerifyOTP() {
     setResending(true);
     setError('');
     try {
-      const dataStr = sessionStorage.getItem('pendingRegistration');
+      const dataStr = localStorage.getItem('pendingRegistration');
       if (!dataStr) { setError('Session expired. Please register again.'); toast.error('Session expired. Please register again.'); navigate('/register'); return; }
       const pendingData = JSON.parse(dataStr);
       const newOtpCode = Math.floor(100000 + Math.random() * 900000).toString();
       const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-      sessionStorage.setItem('registrationOTP', newOtpCode);
-      sessionStorage.setItem('otpExpiresAt', newExpiresAt.toISOString());
+      localStorage.setItem('registrationOTP', newOtpCode);
+      localStorage.setItem('otpExpiresAt', newExpiresAt.toISOString());
       try {
         const sent = await sendRegistrationOTPEmail(email, pendingData.firstName || 'Customer', newOtpCode);
         if (sent !== false) { toast.success('A new OTP has been sent to your email.'); }

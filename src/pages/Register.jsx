@@ -115,9 +115,9 @@ export default function Register() {
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
       // Store OTP data FIRST before sending email to avoid race condition
-      sessionStorage.setItem('pendingRegistration', JSON.stringify(formData));
-      sessionStorage.setItem('registrationOTP', otpCode);
-      sessionStorage.setItem('otpExpiresAt', otpExpiresAt);
+      localStorage.setItem('pendingRegistration', JSON.stringify(formData));
+      localStorage.setItem('registrationOTP', otpCode);
+      localStorage.setItem('otpExpiresAt', otpExpiresAt);
 
       try {
         const sent = await sendRegistrationOTPEmail(formData.email, formData.firstName, otpCode);
@@ -128,9 +128,9 @@ export default function Register() {
       } catch (emailErr) {
         console.error("EmailJS error:", emailErr);
         // Clear stored OTP on email failure
-        sessionStorage.removeItem('pendingRegistration');
-        sessionStorage.removeItem('registrationOTP');
-        sessionStorage.removeItem('otpExpiresAt');
+        localStorage.removeItem('pendingRegistration');
+        localStorage.removeItem('registrationOTP');
+        localStorage.removeItem('otpExpiresAt');
         toast.error('Failed to send verification email. Please check your email address and try again.');
         setLoading(false);
         return;

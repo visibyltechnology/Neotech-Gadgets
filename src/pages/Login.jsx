@@ -20,7 +20,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
 
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       const userDocSnap = await getDoc(userDocRef);
@@ -38,6 +38,19 @@ export default function Login() {
       navigate('/shop');
     } catch (err) {
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        const pendingStr = localStorage.getItem('pendingRegistration');
+        if (pendingStr) {
+          try {
+            const pending = JSON.parse(pendingStr);
+            if (pending.email.toLowerCase() === email.trim().toLowerCase()) {
+              toast.error('You have an unverified registration. Redirecting to OTP page...');
+              navigate(`/verify-otp?email=${encodeURIComponent(email.trim())}`);
+              return;
+            }
+          } catch (e) {
+            console.error('Error parsing pendingRegistration from localStorage', e);
+          }
+        }
         setError('Invalid email or password. Please try again.');
         toast.error('Invalid email or password.');
       } else if (err.message && err.message.toLowerCase().includes('offline')) {
