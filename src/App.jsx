@@ -196,17 +196,15 @@ const SplashScreen = () => (
   </div>
 );
 
-function App() {
-  const { user, isAdmin, init, loading } = useAuthStore();
-
-  useEffect(() => { init(); }, [init]);
+function AppContent() {
+  const { user, isAdmin, loading } = useAuthStore();
 
   if (loading) {
     return <SplashScreen />;
   }
 
   return (
-    <Router>
+    <>
       <ScrollToTop />
       <ReturnToTopButton />
       <Navbar />
@@ -242,8 +240,8 @@ function App() {
           <Route path="/tvs"            element={<Shop />} />
           <Route path="/accessories"    element={<Shop />} />
 
-          <Route path="/login"          element={<Login />} />
-          <Route path="/register"       element={<Register />} />
+          <Route path="/login"          element={user ? <Navigate to="/profile" replace /> : <Login />} />
+          <Route path="/register"       element={user ? <Navigate to="/profile" replace /> : <Register />} />
           <Route path="/verify-otp"     element={<VerifyOTP />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password"  element={<ResetPassword />} />
@@ -272,6 +270,17 @@ function App() {
           </Route>
         </Routes>
       </Suspense>
+    </>
+  );
+}
+
+function App() {
+  const init = useAuthStore(s => s.init);
+  useEffect(() => { init(); }, [init]);
+
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

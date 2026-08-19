@@ -93,29 +93,15 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // --- Reliable email existence check (runs BEFORE sending OTP) ---
-      // Step 1: Try fetchSignInMethodsForEmail (works for all providers)
+      // We'll rely solely on fetchSignInMethodsForEmail if it works.
+      // If it fails (e.g. due to Email Enumeration Protection), the user will receive an OTP,
+      // and if they are already registered, they will be informed during the Verify OTP step.
       let emailExists = false;
       try {
         const methods = await fetchSignInMethodsForEmail(auth, formData.email);
         if (methods && methods.length > 0) emailExists = true;
-      } catch (_) { /* deprecated API may fail silently, fall through to probe */ }
-
-      // Step 2: Probe method as backup (catches email/password accounts reliably)
-      if (!emailExists) {
-        try {
-          const probe = await createUserWithEmailAndPassword(auth, formData.email, '__PROBE_' + Date.now());
-          // Email was free — delete the probe account
-          await deleteUser(probe.user);
-        } catch (probeErr) {
-          if (
-            probeErr.code === 'auth/email-already-in-use' ||
-            probeErr.code === 'auth/account-exists-with-different-credential'
-          ) {
-            emailExists = true;
-          }
-          // Other probe errors (e.g., network) are ignored — let registration continue
-        }
+      } catch (_) { 
+        // Silently ignore if fetchSignInMethodsForEmail is blocked
       }
 
       if (emailExists) {
