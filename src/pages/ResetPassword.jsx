@@ -3,14 +3,14 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
+import { auth } from '../firebase';
+import { confirmPasswordReset } from 'firebase/auth';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email');
+  const oobCode = searchParams.get('oobCode');
   const navigate = useNavigate();
 
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,40 +20,15 @@ export default function ResetPassword() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!email) {
+    if (!oobCode) {
+      toast.error('Invalid or missing password reset code.');
       navigate('/login');
     }
-  }, [email, navigate]);
-
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return false;
-
-    setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
-
-    // Focus next input
-    if (element.nextSibling && element.value) {
-      element.nextSibling.focus();
-    }
-  };
-
-  const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace') {
-      if (!otp[index] && e.target.previousSibling) {
-        e.target.previousSibling.focus();
-      }
-    }
-  };
+  }, [oobCode, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const enteredCode = otp.join('');
     
-    if (enteredCode.length !== 6) {
-      setError('Please enter the full 6-digit verification code.');
-      toast.error('Invalid OTP code.');
-      return;
-    }
-
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match.');
       toast.error('Passwords do not match.');
@@ -70,22 +45,18 @@ export default function ResetPassword() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/reset-password', {
-        email,
-        otp: enteredCode,
-        newPassword,
-        project: 'Neotech Gadgets'
-      });
-
-      if (response.data.success) {
-        toast.success('Password successfully reset! You can now log in.');
-        navigate('/login');
-      }
+      await confirmPasswordReset(auth, oobCode, newPassword);
+      toast.success('Password successfully reset! You can now log in.');
+      navigate('/login');
     } catch (err) {
       console.error('Reset Password Error:', err);
-      let errorMessage = err.response?.data?.error || 'Failed to reset password. Ensure the service is running.';
-      if (typeof errorMessage === 'string' && errorMessage.includes('Firebase:')) {
-        errorMessage = errorMessage.replace(/Firebase:\s*(.*?)\s*\(auth.*\)./, '$1');
+      let errorMessage = err.message || 'Failed to reset password.';
+      if (err.code === 'auth/invalid-action-code') {
+        errorMessage = 'The reset link is invalid or has expired.';
+      } else if (err.code === 'auth/user-disabled') {
+        errorMessage = 'The user account has been disabled.';
+      } else if (err.code === 'auth/user-not-found') {
+        errorMessage = 'The user account does not exist.';
       }
       setError(errorMessage);
       toast.error(errorMessage);
@@ -112,8 +83,8 @@ export default function ResetPassword() {
           {/* Card */}
           <div className="bg-white border border-gray-200 shadow-lg rounded-sm overflow-hidden">
             <div className="bg-brandDark px-8 py-6 text-white text-center">
-              <h1 className="text-2xl font-black uppercase tracking-wide font-display">Reset Password</h1>
-              <p className="text-gray-400 text-sm font-medium mt-1">Enter the 6-digit code sent to <strong>{email}</strong></p>
+              <h1 className="text-2xl font-black uppercase tracking-wide font-display">Create New Password</h1>
+              <p className="text-gray-400 text-sm font-medium mt-1">Enter your new secure password below</p>
             </div>
 
             <div className="px-8 py-8">
@@ -125,27 +96,6 @@ export default function ResetPassword() {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 
-                {/* OTP Inputs */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 text-center">
-                    Verification Code
-                  </label>
-                  <div className="flex justify-center gap-2 mb-4">
-                    {otp.map((data, index) => (
-                      <input
-                        key={index}
-                        type="text"
-                        maxLength="1"
-                        value={data}
-                        onChange={(e) => handleOtpChange(e.target, index)}
-                        onKeyDown={(e) => handleKeyDown(e, index)}
-                        onFocus={(e) => e.target.select()}
-                        className="w-10 h-12 text-xl text-center border border-gray-300 focus:border-brandLime outline-none rounded-sm font-black bg-gray-50 focus:bg-white text-brandDark transition-all shadow-sm"
-                      />
-                    ))}
-                  </div>
-                </div>
-
                 {/* New Password */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">

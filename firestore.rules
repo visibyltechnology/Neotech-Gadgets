@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Function to check if the authenticated user has an isAdmin boolean set to true
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Default rule to reject everything not explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- USERS COLLECTION ---
+    match /users/{userId} {
+      // Users can read and write their own document, admins can read and write all
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // --- PRODUCTS COLLECTION ---
+    match /products/{productId} {
+      // Anyone can view products
+      allow read: if true;
+      // Only admins can create, update, or delete products
+      allow write: if isAdmin();
+      
+      // Allow reading product reviews publicly
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuthenticated(); // Assuming any logged in user can review
+        allow update, delete: if isAdmin(); // Or limit to review author if needed
+      }
+    }
+
+    // --- ORDERS COLLECTION ---
+    match /orders/{orderId} {
+      // Users can read their own orders, admins can read all
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      // Authenticated users can create orders
+      allow create: if isAuthenticated();
+      // Only admins can update or delete orders
+      allow update, delete: if isAdmin();
+    }
+
+    // --- SWAP REQUESTS ---
+    match /swapRequests/{swapId} {
+      // Users can read their own swap requests or query by reference ID (done from client app)
+      allow read: if true; // Might need to be refined based on privacy requirements
+      // Authenticated users can create swap requests
+      allow create: if true; // Assuming non-auth users can create a swap request if they have a reference id? Update if not.
+      // Only admins can update or delete
+      allow update, delete: if isAdmin();
+    }
+
+    // --- NOTIFICATIONS ---
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+    
+    // --- TRADE IN DEVICES ---
+    match /tradeInDevices/{deviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- BRANDS, CATEGORIES, SUBCATEGORIES, SPECIFICATIONS ---
+    // Make these read-only for public, admin-writeable
+    match /brands/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /categories/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /subcategories/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /specifications/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // --- OTP COLLECTION ---
+    match /otps/{otpId} {
+      // Be careful with OTP collection access
+      allow read, write: if true; // Revisit based on strict security needs, likely best restricted
+    }
+  }
+}

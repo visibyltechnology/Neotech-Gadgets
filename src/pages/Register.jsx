@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
-import { fetchSignInMethodsForEmail, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { fetchSignInMethodsForEmail, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import Footer from '../components/Footer';
 import LegalModal from '../components/LegalModal';
 import { Eye, EyeOff, CheckCircle, UserPlus } from 'lucide-react';
-import { sendRegistrationOTPEmail } from '../utils/email';
 import toast from 'react-hot-toast';
 
 const NT = {
@@ -93,14 +93,12 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // We'll rely solely on fetchSignInMethodsForEmail if it works.
-      // If it fails (e.g. due to Email Enumeration Protection), the user will receive an OTP,
-      // and if they are already registered, they will be informed during the Verify OTP step.
+      // Check if email already exists (best-effort, may be blocked by Firebase's enumeration protection)
       let emailExists = false;
       try {
         const methods = await fetchSignInMethodsForEmail(auth, formData.email);
         if (methods && methods.length > 0) emailExists = true;
-      } catch (_) { 
+      } catch (_) {
         // Silently ignore if fetchSignInMethodsForEmail is blocked
       }
 
@@ -111,35 +109,35 @@ export default function Register() {
         return;
       }
 
-      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      // Create the Firebase user immediately
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
 
-      // Store OTP data FIRST before sending email to avoid race condition
-      localStorage.setItem('pendingRegistration', JSON.stringify(formData));
-      localStorage.setItem('registrationOTP', otpCode);
-      localStorage.setItem('otpExpiresAt', otpExpiresAt);
+      // Save profile to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        email: formData.email,
+        isAdmin: false,
+        isEmailVerified: false,
+        createdAt: new Date().toISOString(),
+      });
 
+      // Send Firebase's native verification email.
+      // Non-blocking: account is created regardless of email delivery outcome.
       try {
-        const sent = await sendRegistrationOTPEmail(formData.email, formData.firstName, otpCode);
-        if (!sent) {
-          throw new Error('Failed to send OTP via EmailJS.');
-        }
-        toast.success('OTP sent! Check your email inbox (and spam folder).');
+        await sendEmailVerification(user);
+        setSuccessMessage('Account created! Please check your email to verify your account.');
+        toast.success('Verification email sent! Check your inbox.');
       } catch (emailErr) {
-        console.error("EmailJS error:", emailErr);
-        // Clear stored OTP on email failure
-        localStorage.removeItem('pendingRegistration');
-        localStorage.removeItem('registrationOTP');
-        localStorage.removeItem('otpExpiresAt');
-        toast.error('Failed to send verification email. Please check your email address and try again.');
-        setLoading(false);
-        return;
+        console.warn('Verification email failed to send:', emailErr?.code, emailErr?.message);
+        // Account was still created successfully — just let the user know
+        setSuccessMessage('Account created! The verification email could not be sent right now. You can request a new one after logging in.');
+        toast.success('Account created! Log in and request email verification.');
       }
-
-      setSuccessMessage('Verification email sent!');
-      navigate(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
-      console.error("Registration error:", err);
+      console.error('Registration error:', err);
       if (err.message && err.message.toLowerCase().includes('offline')) {
         setError('Please check your internet connection and try again.');
         toast.error('Check your internet connection.');
@@ -211,7 +209,7 @@ export default function Register() {
                     <div>
                       <h3 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '1.2rem', fontWeight: 800, color: NT.textMain, textTransform: 'uppercase', marginBottom: 8 }}>Account Created!</h3>
                       <p style={{ color: '#4ade80', fontSize: '0.85rem', fontWeight: 500 }}>{successMessage}</p>
-                      <p style={{ color: NT.textMuted, fontSize: '0.8rem', marginTop: 8 }}>A verification OTP has been sent to your email.</p>
+                      <p style={{ color: NT.textMuted, fontSize: '0.8rem', marginTop: 8 }}>Click the link in the email to activate your account, then log in.</p>
                     </div>
                   </div>
                   <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: '1.5rem', background: 'linear-gradient(135deg,#D42B2B,#A01E1E)', color: '#fff', fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.85rem 2rem', borderRadius: 12, textDecoration: 'none', boxShadow: '0 6px 24px rgba(212,43,43,0.35)' }}>

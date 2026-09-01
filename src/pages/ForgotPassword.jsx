@@ -56,7 +56,11 @@ export default function ForgotPassword() {
       }
 
       // Step 2: Send Firebase's built-in reset email. 
-      await sendPasswordResetEmail(auth, email.trim());
+      const actionCodeSettings = {
+        url: `${window.location.origin}/reset-password`,
+        handleCodeInApp: true,
+      };
+      await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings);
       
       setEmailSent(true);
       toast.success('Password reset email sent! Check your inbox.');
