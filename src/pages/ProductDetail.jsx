@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, ArrowLeft, ChevronDown, CheckCircle, ShieldCheck, RefreshCw } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, CheckCircle, ShieldCheck, RefreshCw } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Footer from '../components/Footer';
@@ -8,7 +8,6 @@ import useCartStore from '../store/useCartStore';
 import useAuthStore from '../store/useAuthStore';
 import toast from 'react-hot-toast';
 import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { INTEREST_RATES_PERCENT } from '../utils/interestRates';
 
 function fmt(n) {
   return '₦' + Math.ceil(n).toLocaleString('en-NG');
@@ -26,9 +25,8 @@ export default function ProductDetail() {
   const [selectedImg, setSelectedImg] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
   const [selectedVariantId, setSelectedVariantId] = useState(null);
-  const [showInstallment, setShowInstallment] = useState(false);
-  const [installments, setInstallments] = useState(2);
-  const [paymentFrequency, setPaymentFrequency] = useState('monthly');
+
+
 
   const { user } = useAuthStore();
   const [reviews, setReviews] = useState([]);
@@ -120,14 +118,6 @@ export default function ProductDetail() {
     : variantPrice;
   
   const price = basePrice;
-  const monthlyRate = INTEREST_RATES_PERCENT[installments] / 100;
-  const rate        = monthlyRate * (paymentFrequency === 'weekly' ? 0.5 : 1);
-  const displayRate = INTEREST_RATES_PERCENT[installments] * (paymentFrequency === 'weekly' ? 0.5 : 1);
-  const total       = price * (1 + rate);
-  
-  const totalPeriods = installments;
-  const periodPayment = total / totalPeriods;
-  const interestAmt = total - price;
 
   const allImages = product.images && product.images.length > 0 ? product.images : [product.img].filter(Boolean);
 
@@ -149,11 +139,6 @@ export default function ProductDetail() {
 
   const handleBuyOnce = () => {
     addToCart(getProductWithCondition(), 1, 'full', 1, price);
-    navigate('/cart');
-  };
-
-  const handleInstallment = () => {
-    addToCart(getProductWithCondition(), 1, 'installment', installments, periodPayment, paymentFrequency);
     navigate('/cart');
   };
 
@@ -379,131 +364,6 @@ export default function ProductDetail() {
               >
                 <RefreshCw size={18} /> Swap For This
               </button>
-            </div>
-
-            {/* Installment Payment Section */}
-            <div style={{ background: '#161618', border: '1px solid #2A2A30', borderRadius: 16, overflow: 'hidden', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}>
-              <button
-                style={{
-                  width: '100%', padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  background: '#1E1E22', border: 'none', cursor: 'pointer', transition: 'background 0.2s'
-                }}
-                onClick={() => setShowInstallment(v => !v)}
-                onMouseEnter={e => e.currentTarget.style.background = '#2A2A30'}
-                onMouseLeave={e => e.currentTarget.style.background = '#1E1E22'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(212,43,43,0.1)', border: '1px solid rgba(212,43,43,0.3)', color: '#FF7070', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <i className="fas fa-calendar-alt" style={{ fontSize: '0.85rem' }}></i>
-                  </div>
-                  <span style={{ fontWeight: 800, color: '#E8E8F0', textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '0.85rem', fontFamily: 'Rajdhani, sans-serif' }}>Pay in Installments</span>
-                </div>
-                <ChevronDown size={20} color="#707080" style={{ transform: showInstallment ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
-              </button>
-
-              {showInstallment && (
-                <div style={{ padding: '1.5rem', borderTop: '1px solid #2A2A30' }}>
-                  
-                  {/* Frequency Toggle */}
-                  <div style={{ display: 'flex', background: '#1E1E22', padding: 6, borderRadius: 12, marginBottom: '1.5rem', width: '100%', maxWidth: 320, margin: '0 auto 1.5rem', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', border: '1px solid #2A2A30' }}>
-                    <button
-                      style={{
-                        flex: 1, padding: '0.5rem', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', borderRadius: 8, transition: 'all 0.2s', border: 'none', cursor: 'pointer',
-                        background: paymentFrequency === 'monthly' ? '#D42B2B' : 'transparent',
-                        color: paymentFrequency === 'monthly' ? '#fff' : '#707080',
-                        boxShadow: paymentFrequency === 'monthly' ? '0 4px 12px rgba(212,43,43,0.3)' : 'none'
-                      }}
-                      onClick={() => setPaymentFrequency('monthly')}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      style={{
-                        flex: 1, padding: '0.5rem', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', borderRadius: 8, transition: 'all 0.2s', border: 'none', cursor: 'pointer',
-                        background: paymentFrequency === 'weekly' ? '#D42B2B' : 'transparent',
-                        color: paymentFrequency === 'weekly' ? '#fff' : '#707080',
-                        boxShadow: paymentFrequency === 'weekly' ? '0 4px 12px rgba(212,43,43,0.3)' : 'none'
-                      }}
-                      onClick={() => setPaymentFrequency('weekly')}
-                    >
-                      Weekly
-                    </button>
-                  </div>
-
-                  {/* Duration Selector */}
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 800, color: '#707080', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12, textAlign: 'center' }}>
-                      Select Duration ({paymentFrequency === 'weekly' ? 'Weeks' : 'Months'})
-                    </label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
-                      {[2, 3, 4, 5, 6].map(n => (
-                        <button
-                          key={n}
-                          style={{
-                            width: 48, height: 48, borderRadius: 12, fontWeight: 800, fontSize: '1.1rem', transition: 'all 0.2s', border: '1px solid', cursor: 'pointer',
-                            background: installments === n ? '#D42B2B' : '#1E1E22',
-                            color: installments === n ? '#fff' : '#C8C8D4',
-                            borderColor: installments === n ? '#FF7070' : '#2A2A30',
-                            transform: installments === n ? 'translateY(-2px)' : 'none',
-                            boxShadow: installments === n ? '0 8px 16px rgba(212,43,43,0.3)' : 'none'
-                          }}
-                          onClick={() => setInstallments(n)}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Breakdown */}
-                  <div style={{ background: '#1E1E22', border: '1px solid #2A2A30', borderRadius: 16, padding: '1.5rem', marginBottom: '1.5rem', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #2A2A30' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#707080' }}>Interest rate</span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: displayRate > 0 ? '#E8E8F0' : '#D42B2B' }}>
-                        {displayRate}% {displayRate === 0 && '🎉'}
-                        {paymentFrequency === 'weekly' && INTEREST_RATES_PERCENT[installments] > 0 && (
-                          <span style={{ marginLeft: 4, color: '#D42B2B', fontWeight: 700, fontSize: '0.65rem' }}>(½ of monthly)</span>
-                        )}
-                      </span>
-                    </div>
-                    {interestAmt > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #2A2A30' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#707080' }}>Interest added</span>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#E8E8F0' }}>{fmt(interestAmt)}</span>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #2A2A30' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#707080' }}>Total to pay</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#E8E8F0' }}>{fmt(total)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#9898A8' }}>{paymentFrequency === 'monthly' ? 'Monthly payment' : 'Weekly payment'}</span>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#D42B2B' }}>{fmt(periodPayment)} <span style={{ fontSize: '0.65rem', color: '#707080', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>/{paymentFrequency === 'weekly' ? 'wk' : 'mo'}</span></span>
-                    </div>
-                  </div>
-                  
-                  <div style={{ background: 'rgba(212,43,43,0.05)', border: '1px solid rgba(212,43,43,0.15)', borderRadius: 12, padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: 12 }}>
-                    <i className="fas fa-info-circle" style={{ color: '#D42B2B', marginTop: 2 }}></i>
-                    <p style={{ fontSize: '0.7rem', color: '#9898A8', fontWeight: 500, lineHeight: 1.6 }}>
-                      <strong style={{ color: '#E8E8F0', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.65rem' }}>How multi-item orders work:</strong> Items with the exact same payment plan are processed together. Mixes of different plans require you to unify them or split them at checkout.
-                    </p>
-                  </div>
-
-                  <button 
-                    style={{
-                      width: '100%', background: '#1E1E22', border: '1px solid #2A2A30', color: '#E8E8F0',
-                      padding: '1rem', borderRadius: 12, fontSize: '0.75rem', fontWeight: 800,
-                      textTransform: 'uppercase', letterSpacing: '0.15em', transition: 'all 0.25s ease',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer'
-                    }}
-                    onClick={handleInstallment}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#D42B2B'; e.currentTarget.style.borderColor = '#FF7070'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#1E1E22'; e.currentTarget.style.borderColor = '#2A2A30'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    Start {paymentFrequency === 'weekly' ? 'Weekly' : 'Monthly'} Plan
-                  </button>
-                </div>
-              )}
             </div>
 
           </div>
