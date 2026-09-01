@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import Footer from '../components/Footer';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
@@ -22,8 +22,21 @@ export default function Login() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
 
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      const user = userCredential.user;
+      const userDocRef = doc(db, 'users', user.uid);
       const userDocSnap = await getDoc(userDocRef);
+
+      // Sync Firebase Auth emailVerified status to Firestore on every login.
+      // This is the only reliable way to mark the account as verified after the user
+      // clicks the Firebase verification link, since Firebase Auth sets emailVerified
+      // on the auth profile but our Firestore document is not automatically updated.
+      if (user.emailVerified) {
+        try {
+          await updateDoc(userDocRef, { isEmailVerified: true });
+        } catch (syncErr) {
+          console.warn('Could not sync emailVerified to Firestore:', syncErr);
+        }
+      }
 
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
