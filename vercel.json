@@ -1,6 +1,8 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "routes": [
-    { "src": "/(.*)", "dest": "https://cobalt-pine-works.vercel.app/$1" }
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://cobalt-pine-works.vercel.app/$1"
+    }
   ]
 }
