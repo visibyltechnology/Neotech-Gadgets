@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://cobalt-pine-works.vercel.app/$1"
+    }
+  ]
+}
